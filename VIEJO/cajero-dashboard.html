@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Banco Escolar Módulo de Cajero</title>
+<link rel="stylesheet" href="/css/cajero.css">
+<script src="https://unpkg.com/html5-qrcode"></script>
+<style>
+/* Estilos rápidos para la columna de movimientos si no los tenés en cajero.css */
+.panel-alumno-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 20px;
+}
+@media (max-width: 900px) {
+    .panel-alumno-layout { grid-template-columns: 1fr; }
+}
+.tabla-movimientos-container {
+    max-height: 420px;
+    overflow-y: auto;
+}
+.tabla-movimientos {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+.tabla-movimientos th, .tabla-movimientos td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #333;
+    text-align: left;
+}
+.badge-recarga { color: #28a745; font-weight: bold; }
+.badge-extraccion { color: #dc3545; font-weight: bold; }
+.badge-posnet { color: #ffc107; font-weight: bold; }
+</style>
+</head>
+<body>
+<div id="navbar-container"></div>
+<main class="dashboard-container">
+<!-- Ficha 1: Buscador -->
+<section class="card card-busqueda">
+<h2> Buscar Cuenta de Alumno</h2>
+<div class="search-box">
+<input type="text" id="txtBuscarDni" placeholder="Escaneá la tarjeta QR ingresá el DNI..." autofocus>
+<button id="btnBuscar" class="btn btn-primary">Buscar</button>
+<button id="btnEscanearQR" class="btn btn-dark"> Cámara QR</button>
+</div>
+</section>
+
+<!-- Panel Alumno LAYOUT 2 COLUMNAS -->
+<div id="panelAlumno" class="panel-alumno panel-alumno-layout" style="display: none;">
+    <!-- COLUMNA IZQUIERDA: PERFIL Y ACCIONES -->
+    <div class="columna-principal d-flex flex-column gap-3">
+        <!-- Ficha Perfil -->
+        <section class="card card-perfil">
+            <div class="avatar-container">
+                <img id="imgAlumno" src="" alt="Foto de perfil">
+            </div>
+            <h2 id="lblNombre">-</h2>
+            <p id="lblCurso" class="text-subtitle">-</p>
+            <div class="meta-info">
+                <p>DNI: <span id="lblDni"></span></p>
+                <p>QR: <span id="lblQR"></span></p>
+            </div>
+            <div class="saldo-box">
+                <span class="saldo-label">Saldo Actual</span>
+                <h1 id="lblSaldo">$0.00</h1>
+            </div>
+        </section>
+
+        <!-- Operaciones -->
+        <div class="operaciones-grid">
+            <!-- Recarga -->
+            <section class="card card-recarga">
+                <h3> Acreditar Dinero (Efectivo)</h3>
+                <form id="formRecarga">
+                    <div class="form-group">
+                        <label for="montoRecarga">Monto a cargar ($)</label>
+                        <input type="number" id="montoRecarga" min="1" step="0.5" placeholder="Ej: 500.00" required>
+                    </div>
+                    <button type="submit" id="btnAcreditar" class="btn btn-success">Acreditar Saldo</button>
+                </form>
+            </section>
+
+            <!-- Extracción -->
+            <section class="card card-extraccion" id="secExtraccion">
+                <h3> Extracción / Retiro de Efectivo</h3>
+                <form id="formExtraccion">
+                    <div class="form-group">
+                        <label for="montoExtraccion">Monto a retirar ($)</label>
+                        <input type="number" id="montoExtraccion" min="1" step="0.5" placeholder="Ej: 200.00" required>
+                    </div>
+                    <div class="form-group pin-box">
+                        <label for="pinExtraccion"> PIN de Autorización del Alumno</label>
+                        <input type="password" id="pinExtraccion" maxlength="4" placeholder="****" required>
+                    </div>
+                    <button type="submit" id="btnExtraer" class="btn btn-danger">Confirmar Extracción</button>
+                </form>
+            </section>
+
+            <!-- PIN -->
+            <section class="card card-pin">
+                <h3> Blanqueo / Restauración de PIN</h3>
+                <form id="formResetPin">
+                    <div class="form-group pin-box">
+                        <label for="nuevoPin">Nuevo PIN (4 dígitos del alumno)</label>
+                        <input type="password" id="nuevoPin" maxlength="4" placeholder="****" required>
+                    </div>
+                    <button type="submit" id="btnCambiarPin" class="btn btn-warning">Restaurar PIN</button>
+                </form>
+            </section>
+        </div>
+    </div>
+
+    <!-- COLUMNA DERECHA: ÚLTIMOS MOVIMIENTOS -->
+    <div class="columna-lateral">
+        <section class="card card-movimientos h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h3>📋 Últimos Movimientos</h3>
+                <button class="btn btn-sm btn-outline-secondary" onclick="cargarUltimosMovimientos(alumnoActual.dni)">🔄</button>
+            </div>
+            <div class="tabla-movimientos-container">
+                <table class="tabla-movimientos">
+                    <thead>
+                        <tr>
+                            <th>Fecha/Hora</th>
+                            <th>Tipo</th>
+                            <th>Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tblMovimientosBody">
+                        <tr><td colspan="3" class="text-center text-muted">Cargando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+</div>
+</main>
+
+<div id="modalLectorQR" class="modal-overlay">
+<div class="modal-content">
+<h3>Escanear Código QR</h3>
+<div id="reader"></div>
+<button id="btnCerrarLectorQR" class="btn btn-danger">Cancelar</button>
+</div>
+</div>
+
+<script src="js/navbar.js"></script>
+<script src="js/cajero.js"></script>
+</body>
+</html>

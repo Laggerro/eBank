@@ -1,0 +1,345 @@
+// /ebank/js/alta-cliente.js
+
+// Variables globales para captura de foto y modal/cámara QR
+let fotoBlobCapturada = null;
+let streamWebcam = null;
+let html5QrCode = null;
+let destinoQr = 'FORM'; // 'FORM' para el campo QR del formulario, 'TABLA' para el buscador
+
+let modalCamaraBs = null;
+let modalQrBs = null;
+let listaClientesCache = [];
+
+document.addEventListener("DOMContentLoaded", async () => {
+    // 1. Inicializar Modales Bootstrap de forma segura
+    const elModalCamara = document.getElementById("modalCamara");
+    if (elModalCamara) {
+        modalCamaraBs = new bootstrap.Modal(elModalCamara);
+        elModalCamara.addEventListener("hidden.bs.modal", detenerWebcam);
+    }
+
+    const elModalQr = document.getElementById("modalLectorQR");
+    if (elModalQr) {
+        modalQrBs = new bootstrap.Modal(elModalQr);
+        elModalQr.addEventListener("hidden.bs.modal", detenerEscanerQR);
+    }
+
+    // 2. Vincular Eventos de Botones de Foto y QR
+    document.getElementById("btnAbrirCamara")?.addEventListener("click", abrirWebcam);
+    document.getElementById("btnCapturar")?.addEventListener("click", tomarFotoWebcam);
+
+    document.getElementById("btnEscanearQR")?.addEventListener("click", () => iniciarEscanerQR('FORM'));
+    document.getElementById("btnEscanearQRTabla")?.addEventListener("click", () => iniciarEscanerQR('TABLA'));
+
+    // 3. Vincular Buscador en Tiempo Real
+    document.getElementById("txtBuscarTabla")?.addEventListener("keyup", filtrarTabla);
+
+    // 4. Vincular Formulario Submit y Cancelar
+    const form = document.getElementById("formAltaCliente");
+    if (form) {
+        form.addEventListener("submit", guardarCliente);
+    } else {
+        console.error("No se encontró el formulario #formAltaCliente");
+    }
+
+    document.getElementById("btnCancelarEdicion")?.addEventListener("click", resetFormulario);
+
+    // 5. Cargar datos iniciales (Cursos y Tabla de Clientes)
+    await cargarComboCursos();
+    await cargarTablaClientes();
+});
+
+// ==================== CÁMARA WEBCAM (FOTO DE PERFIL) ====================
+
+async function abrirWebcam() {
+    const video = document.getElementById("webcam");
+    if (!video || !modalCamaraBs) return;
+
+    try {
+        streamWebcam = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+        video.srcObject = streamWebcam;
+        modalCamaraBs.show();
+    } catch (err) {
+        console.error("Error al acceder a la webcam:", err);
+        alert("No se pudo acceder a la cámara web. Verifique los permisos.");
+    }
+}
+
+function tomarFotoWebcam() {
+    const video = document.getElementById("webcam");
+    const canvas = document.getElementById("canvasFoto");
+    const imgPreview = document.getElementById("imgPreview");
+
+    if (!video || !canvas || !imgPreview) return;
+
+    const ctx = canvas.getContext("2d");
+    canvas.width = video.videoWidth || 300;
+    canvas.height = video.videoHeight || 300;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob((blob) => {
+        fotoBlobCapturada = blob;
+        imgPreview.src = URL.createObjectURL(blob);
+        modalCamaraBs.hide();
+    }, "image/jpeg", 0.85);
+}
+
+function detenerWebcam() {
+    if (streamWebcam) {
+        streamWebcam.getTracks().forEach(track => track.stop());
+        streamWebcam = null;
+    }
+}
+
+// ==================== ESCÁNER QR (MODAL REUTILIZABLE) ====================
+
+function iniciarEscanerQR(destino) {
+    destinoQr = destino;
+    if (!modalQrBs) return;
+
+    modalQrBs.show();
+
+    if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+    }
+
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+    html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
+        if (destinoQr === 'FORM') {
+            const txtQr = document.getElementById("txtCodigoQr");
+            if (txtQr) txtQr.value = decodedText;
+        } else if (destinoQr === 'TABLA') {
+            const txtBuscar = document.getElementById("txtBuscarTabla");
+            if (txtBuscar) {
+                txtBuscar.value = decodedText;
+                filtrarTabla();
+            }
+        }
+        modalQrBs.hide();
+    }).catch(err => {
+        console.error("Error al iniciar lector QR:", err);
+    });
+}
+
+function detenerEscanerQR() {
+    if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => html5QrCode.clear()).catch(err => console.error(err));
+    }
+}
+
+// ==================== FUNCIONES BASE Y CARGA DE DATOS ====================
+
+function blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+async function cargarComboCursos() {
+    const selectCurso = document.getElementById("txtCurso");
+    if (!selectCurso) return;
+
+    try {
+        const res = await fetch('../obtener_cursos.php');
+        const data = await res.json();
+
+        if (data.success && Array.isArray(data.cursos) && data.cursos.length > 0) {
+            selectCurso.innerHTML = '<option value="">-- Seleccionar Sector / Curso --</option>' +
+                data.cursos.map(c => `<option value="${c.nombre}">${c.nombre}</option>`).join('');
+        } else {
+            selectCurso.innerHTML = '<option value="">Sin sectores/cursos cargados</option>';
+        }
+    } catch (e) {
+        console.error("Error al cargar cursos:", e);
+        selectCurso.innerHTML = '<option value="">Error al obtener cursos</option>';
+    }
+}
+
+async function cargarTablaClientes() {
+    const tbody = document.getElementById("tblClientes");
+    if (!tbody) return;
+
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Cargando alumnos...</td></tr>`;
+
+    try {
+        // AHORA LLAMAMOS AL ENDPOINT ESPECÍFICO DE CLIENTES
+        const res = await fetch('../obtener_clientes.php');
+        const data = await res.json();
+
+        if (data.success && Array.isArray(data.alumnos)) {
+            listaClientesCache = data.alumnos;
+            renderizarTabla(listaClientesCache);
+        } else {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">${data.message || 'No hay clientes registrados.'}</td></tr>`;
+        }
+    } catch (err) {
+        console.error("Error al cargar clientes:", err);
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">Error de conexión al cargar la lista.</td></tr>`;
+    }
+}
+
+
+function renderizarTabla(clientes) {
+    const tbody = document.getElementById("tblClientes");
+    if (!tbody) return;
+
+    if (clientes.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">No se encontraron clientes.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = clientes.map(c => {
+        const nombreCompleto = c.nombre_apellido || `${c.nombre || ''} ${c.apellido || ''}`.trim() || 'Sin Nombre';
+        const qrCodigo = c.codigo_qr || c.qr_code || 'Sin QR';
+
+        return `
+            <tr>
+                <td><img src="${c.foto_url || '../img/default-avatar.png'}" class="rounded-circle border" style="width: 40px; height: 40px; object-fit: cover;"></td>
+                <td class="fw-bold">${nombreCompleto}</td>
+                <td>${c.dni}</td>
+                <td><span class="badge bg-secondary">${c.curso || 'Sin Sector'}</span></td>
+                <td><small class="text-muted">${qrCodigo}</small></td>
+                <td class="text-center">
+                    <button type="button" onclick="editarCliente('${c.dni}')" class="btn btn-sm btn-outline-primary fw-bold">✏️ Editar</button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+
+function filtrarTabla() {
+    const q = (document.getElementById("txtBuscarTabla")?.value || "").toLowerCase().trim();
+    const filtrados = listaClientesCache.filter(c => {
+        const nom = `${c.nombre || ''} ${c.apellido || ''}`.toLowerCase();
+        const dni = (c.dni || '').toString();
+        const qr = (c.qr_code || '').toLowerCase();
+        return nom.includes(q) || dni.includes(q) || qr.includes(q);
+    });
+    renderizarTabla(filtrados);
+}
+
+// ==================== EDICIÓN Y GUARDADO (POST / PATCH) ====================
+
+function editarCliente(dni) {
+    const cliente = listaClientesCache.find(c => c.dni.toString() === dni.toString());
+    if (!cliente) return;
+
+    document.getElementById("clienteId").value = cliente.dni;
+    document.getElementById("txtDni").value = cliente.dni;
+    document.getElementById("txtDni").readOnly = true;
+    
+    // Leemos la columna real nombre_apellido
+    document.getElementById("txtNombre").value = cliente.nombre_apellido || `${cliente.nombre || ''} ${cliente.apellido || ''}`.trim();
+    document.getElementById("txtCurso").value = cliente.curso || '';
+    document.getElementById("txtCodigoQr").value = cliente.codigo_qr || cliente.qr_code || '';
+    document.getElementById("txtPin").value = ''; // Dejar vacío para conservar el actual
+    
+    document.getElementById("helpPin")?.classList.remove("d-none");
+    document.getElementById("lblTituloForm").innerText = "✏️ Editar Cliente";
+    document.getElementById("btnGuardar").innerText = "Actualizar Cliente";
+    document.getElementById("btnCancelarEdicion").classList.remove("d-none");
+
+    if (cliente.foto_url) {
+        document.getElementById("imgPreview").src = cliente.foto_url;
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+async function guardarCliente(e) {
+    e.preventDefault(); // EVITA EL REFRESH NATIVO DE LA PÁGINA AL HACER SUBMIT
+    console.log("Submit interceptado correctamente. Enviando a guardar_cliente.php...");
+
+    const msgDiv = document.getElementById("msgAlta");
+    if (msgDiv) msgDiv.classList.add("d-none");
+
+    const btn = document.getElementById("btnGuardar");
+    btn.disabled = true;
+
+    const clienteId = document.getElementById("clienteId").value;
+    const dni = document.getElementById("txtDni").value.trim();
+    const nombre = document.getElementById("txtNombre").value.trim();
+    const curso = document.getElementById("txtCurso").value.trim();
+    const pin = document.getElementById("txtPin").value.trim();
+    const codigoQR = document.getElementById("txtCodigoQr").value.trim();
+
+    // Validar PIN solo si es alta nueva
+    if (!clienteId && (pin.length !== 4 || isNaN(pin))) {
+        mostrarError("El PIN inicial debe ser obligatoriamente de 4 dígitos numéricos.");
+        btn.disabled = false;
+        return;
+    }
+
+    try {
+        btn.innerText = "Procesando...";
+
+        const payload = {
+            es_edicion: !!clienteId,
+            dni: dni,
+            nombre_apellido: nombre,
+            curso: curso,
+            codigo_qr: codigoQR || null,
+            pin: pin || undefined
+        };
+
+        if (fotoBlobCapturada) {
+            btn.innerText = "Subiendo imagen...";
+            payload.foto_base64 = await blobToBase64(fotoBlobCapturada);
+        }
+
+        btn.innerText = "Guardando...";
+
+        const res = await fetch('../guardar_cliente.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const respData = await res.json();
+
+        if (respData.success) {
+            alert(clienteId ? "Cliente actualizado con éxito" : "Cliente registrado con éxito");
+            resetFormulario();
+            await cargarTablaClientes();
+        } else {
+            mostrarError(respData.message || "Ocurrió un error en el servidor al guardar.");
+        }
+    } catch (err) {
+        console.error("Error en la llamada Fetch:", err);
+        mostrarError("Error de conexión o fallo al comunicarse con guardar_cliente.php");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = clienteId ? "Actualizar Cliente" : "Registrar Cliente";
+    }
+}
+
+function mostrarError(msg) {
+    const msgDiv = document.getElementById("msgAlta");
+    if (msgDiv) {
+        msgDiv.innerText = msg;
+        msgDiv.classList.remove("d-none");
+    } else {
+        alert(msg);
+    }
+}
+
+function resetFormulario() {
+    document.getElementById("formAltaCliente").reset();
+    document.getElementById("clienteId").value = "";
+    document.getElementById("txtDni").readOnly = false;
+    fotoBlobCapturada = null;
+    
+    document.getElementById("imgPreview").src = "../img/default-avatar.png";
+    document.getElementById("lblTituloForm").innerText = "👤 Registrar Nuevo Cliente";
+    document.getElementById("btnGuardar").innerText = "Registrar Cliente";
+    document.getElementById("btnCancelarEdicion").classList.add("d-none");
+    document.getElementById("helpPin")?.classList.add("d-none");
+    
+    const msgDiv = document.getElementById("msgAlta");
+    if (msgDiv) msgDiv.classList.add("d-none");
+}

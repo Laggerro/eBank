@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Consulta de Saldo - Banco Escolar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0d1b2a, #1b263b);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .card-kiosk {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 1.5rem 1.2rem;
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        #reader {
+            width: 100%;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #000;
+            margin-top: 10px;
+            border: 2px solid #00d2ff;
+        }
+
+        .avatar-img {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #00d2ff;
+            margin-bottom: 5px;
+        }
+
+        .saldo-badge {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #00ff88;
+            text-shadow: 0 0 12px rgba(0, 255, 136, 0.4);
+            line-height: 1.1;
+        }
+
+        .box-movimientos {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            padding: 8px 12px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card-kiosk">
+        <!-- LOGO O TITULO DEL BANCO -->
+        <div class="mb-2">
+            <h4 class="fw-bold text-info m-0">🏦 BANCO ESCOLAR</h4>
+            <small class="text-muted">Terminal de Consulta de Saldo</small>
+        </div>
+
+        <!-- ESTADO ESPERA (CÁMARA LEYENDO) -->
+        <div id="viewScan">
+            <div id="reader"></div>
+            <div class="alert alert-dark border-info text-info mt-3 fs-6 fw-semibold mb-0 py-2">
+                📲 Acerque su tarjeta QR para consultar
+            </div>
+        </div>
+
+        <!-- ESTADO RESULTADO EXITO (MUESTRA SALDO Y MOVIMIENTOS) -->
+        <div id="viewResult" class="d-none">
+            <img id="resFoto" src="" class="avatar-img shadow" alt="Foto Alumno">
+            <h4 id="resNombre" class="fw-bold mb-0 text-white">Nombre Alumno</h4>
+            <p id="resCurso" class="text-info small mb-2">Curso</p>
+            
+            <div class="my-2">
+                <small class="text-uppercase text-muted fw-bold style="font-size: 0.75rem;">Saldo Disponible</small>
+                <div id="resSaldo" class="saldo-badge">$ 0.00</div>
+            </div>
+
+            <!-- TABLA DE LOS ÚLTIMOS 5 MOVIMIENTOS -->
+            <div class="box-movimientos my-2">
+                <div class="text-start text-muted fw-bold mb-1" style="font-size: 0.75rem;">ÚLTIMOS MOVIMIENTOS</div>
+                <div id="listaMovimientos">
+                    <!-- Se genera dinámicamente con JS -->
+                </div>
+            </div>
+
+            <!-- BARRA DE TIEMPO / REINICIO -->
+            <div class="progress mt-2" style="height: 5px;">
+                <div id="progressBar" class="progress-bar bg-info progress-bar-striped progress-bar-animated"
+                    style="width: 100%;"></div>
+            </div>
+        </div>
+
+        <!-- ESTADO ERROR (TARJETA NO REGISTRADA) -->
+        <div id="viewError" class="d-none py-3">
+            <div class="display-3 text-danger mb-2">⚠️</div>
+            <h4 class="fw-bold text-danger mb-2">Tarjeta no registrada</h4>
+            <p class="text-muted small mb-3">El código QR escaneado no pertenece a ningún usuario del sistema.</p>
+            <div class="progress mt-2" style="height: 5px;">
+                <div id="progressBarError" class="progress-bar bg-danger progress-bar-striped progress-bar-animated"
+                    style="width: 100%;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 1. CDN Oficial de Supabase JS -->
+  
+    <!-- 3. Tu lógica de Consulta de Saldo -->
+    <script src="js/consulta-saldo.js?v=1.1"></script>
+
+</body>
+
+</html>
