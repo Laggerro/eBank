@@ -31,8 +31,11 @@ function supabaseQuery($endpoint, $method = 'GET', $data = null) {
     // Desactivar verificación SSL solo para pruebas locales en XAMPP si cURL da problemas
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
-    if ($method === 'POST') {
-        curl_setopt($ch, CURLOPT_POST, true);
+    // 1. Definimos explícitamente el método (GET, POST, PATCH, DELETE, etc.)
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($method));
+
+    // 2. Si enviamos un Payload y NO es un GET, adjuntamos los datos JSON
+    if ($data !== null && strtoupper($method) !== 'GET') {
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     }
 

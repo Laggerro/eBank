@@ -53,10 +53,12 @@ if (!$data) {
 }
 
 try {
-    $dni = trim($data['dni'] ?? '');
+    $id = !empty($data['id']) ? trim($data['id']) : null;
+    $dniNuevo = trim($data['dni'] ?? '');
     $nombreApellido = trim($data['nombre_apellido'] ?? '');
+    $esEdicion = !empty($data['es_edicion']);
 
-    if (empty($dni) || empty($nombreApellido)) {
+    if (empty($dniNuevo) || empty($nombreApellido)) {
         throw new Exception("El DNI y el Nombre Completo son obligatorios.");
     }
 
@@ -65,10 +67,9 @@ try {
         $urlFoto = subirAImgBB($data['foto_base64']);
     }
 
-    // MAPEO EXACTO CON TU TABLA DE SUPABASE:
-    // dni, nombre_apellido, curso, saldo, pin, foto_url, codigo_qr
+    // Armamos el payload solo con lo que se puede modificar
     $payload = [
-        'dni'             => $dni,
+        'dni'             => $dniNuevo,
         'nombre_apellido' => $nombreApellido,
         'curso'           => $data['curso'] ?? '',
         'codigo_qr'       => !empty($data['codigo_qr']) ? $data['codigo_qr'] : null
@@ -79,25 +80,25 @@ try {
     }
 
     if (!empty($data['pin'])) {
-        $payload['pin'] = $data['pin'];
+        $payload['pin'] = password_hash($data['pin'], PASSWORD_BCRYPT);
     }
 
-    $esEdicion = !empty($data['es_edicion']);
-
-    if ($esEdicion) {
-        $endpoint = 'alumnos?dni=eq.' . urlencode($dni);
+    if ($esEdicion && $id) {
+        // PATCH sobre el endpoint filtrando por el UUID exacto
+        $endpoint = 'alumnos?id=eq.' . urlencode($id);
         $metodo = 'PATCH';
     } else {
+        // Alta POST
         $endpoint = 'alumnos';
         $metodo = 'POST';
         $payload['saldo'] = 0.0;
     }
 
+    // Ejecutamos la consulta a Supabase
     $res = supabaseQuery($endpoint, $metodo, $payload);
 
-    // Detectar si Supabase devuelve un error de PostgREST
-    if (isset($res['code']) || isset($res['error']) || isset($res['message'])) {
-        $msgError = $res['message'] ?? 'Error procesando solicitud en Supabase';
+    if (isset($res['code']) || isset($res['error'])) {
+        $msgError = $res['message'] ?? 'Error al procesar en Supabase';
         echo json_encode(['success' => false, 'message' => 'Error de BD: ' . $msgError, 'raw' => $res]);
         exit;
     }

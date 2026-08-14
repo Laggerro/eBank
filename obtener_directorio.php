@@ -13,12 +13,12 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 try {
-    // Alumnos
-    $resAlumnos = supabaseQuery('alumnos?select=dni,nombre_apellido,curso,foto_url,codigo_qr&order=nombre_apellido.asc', 'GET');
+    // 1. Alumnos (Traemos todos los alumnos, tengan o no QR)
+   $resAlumnos = supabaseQuery('alumnos?select=id,dni,nombre_apellido,curso,foto_url,codigo_qr&order=nombre_apellido.asc', 'GET');
     $alumnos = (is_array($resAlumnos) && !isset($resAlumnos['code'])) ? $resAlumnos : [];
 
-    // Usuarios (incluye ADMIN, CAJERO, POSNET)
-    $resUsuarios = supabaseQuery('usuarios?select=id,usuario,nombre,rol,activo&order=nombre.asc', 'GET');
+    // 2. Usuarios del Banco (CORREGIDO: la tabla exacta es 'usuarios_banco')
+    $resUsuarios = supabaseQuery('usuarios_banco?select=id,usuario,nombre,rol,activo&order=nombre.asc', 'GET');
     $usuarios = (is_array($resUsuarios) && !isset($resUsuarios['code'])) ? $resUsuarios : [];
 
     echo json_encode([
