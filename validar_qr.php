@@ -24,7 +24,7 @@ unset($_SESSION['pre_auth_user']); // Limpiar temp
 $rol = $_SESSION['usuario']['rol'];
 $redirects = [
     'ADMIN' => 'pages/admin-dashboard.php',
-    'CAJERO' => 'pages/cajero-dashboard.php',
+    'CAJERO' => 'pages/cajero.php',
     'POSNET' => 'pages/posnet.php'
 ];
 

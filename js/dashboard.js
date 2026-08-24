@@ -52,7 +52,7 @@ async function actualizarTablero() {
             return `
                 <tr>
                     <td>${fecha}</td>
-                    <td><b>${t.alumno_dni || '-'}</b></td>
+                    <td><b>${t.alumno_id || '-'}</b></td>
                     <td><span class="badge ${badgeClass}">${t.tipo}</span></td>
                     <td>${t.stand}</td>
                     <td><b>$${t.monto.toFixed(2)}</b></td>

@@ -46,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
             result = JSON.parse(textResult);
         } catch (jsonErr) {
             console.error("El servidor no devolvió un JSON válido. Respuesta recibida:", textResult);
-            mostrarError("Error interno del servidor en PHP (revisa la consola F12).");
+            mostrarError("Error interno del servidor en PHP (revisa la consola F12).", textResult);
             return;
         }
 
