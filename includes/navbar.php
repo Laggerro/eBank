@@ -29,7 +29,7 @@ $esAdmin = ($rol === 'ADMIN');
       <!-- Enlaces Exclusivos de Admin -->
       <?php if ($esAdmin): ?>
         <a href="admin-dashboard.php" style="color: #fbd38d; text-decoration: none; font-weight: 600;">Tablero Estado 📊</a>
-        <a href="admin-config.php" style="color: #fbd38d; text-decoration: none; font-weight: 600;">Configuración Admin ⚙</a>
+        <a href="administrar.php" style="color: #fbd38d; text-decoration: none; font-weight: 600;">Configuración Admin ⚙</a>
         <a href="generar.php" style="color: #fbd38d; text-decoration: none; font-weight: 600;">Generar Tarjetas 🖨</a>
         <a href="auditoria.php" style="color: #fbd38d; text-decoration: none; font-weight: 600;">Auditoría ⚖</a>
       <?php endif; ?>

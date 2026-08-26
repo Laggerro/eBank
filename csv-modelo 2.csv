@@ -1,0 +1,8 @@
+DNI;Nombre y Apellido;Curso;Saldo;Foto URL;Codigo QR
+35123456;Pérez Juan Manuel;6to 1ra Informática;1500;https://ejemplo.com/fotos/35123456.jpg;QR-111
+38987654;Gómez María Laura;7mo 1ra Informática;;;QR-222
+41333444;Rodríguez Lucas;8vo 1ra Informática;2500;https://ejemplo.com/fotos/35123456.jpg;QR-333
+42555666;Fernández Sofía;9no 1ra Informática;3000;https://ejemplo.com/fotos/38987654.jpg;
+43777888;López Agustín;10mo 1ra Informática;;https://ejemplo.com/fotos/35123456.jpg;QR-555
+44999000;Díaz Valentina;11mo 1ra Informática;5000;;QR-666
+40111222;Romero Mateo;12mo 1ra Informática;500;https://ejemplo.com/fotos/35123456.jpg;QR-777
