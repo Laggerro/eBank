@@ -1,6 +1,5 @@
 // js/cajero.js
 let alumnoActual = null;
-let html5QrcodeScanner = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnBuscar')?.addEventListener('click', () => {
@@ -15,54 +14,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Bindeo del botón Cámara QR
-    document.getElementById('btnEscanearQR')?.addEventListener('click', abrirLectorQR);
-    document.getElementById('btnCerrarQR')?.addEventListener('click', cerrarLectorQR);
-
+    // Bindeo del botón Cámara QR usando el modal unificado
+ document.getElementById('btnEscanearQR')?.addEventListener('click', () => {
+    abrirLectorQR((codigoLeido) => {
+        const inputDni = document.getElementById('txtBuscarDni');
+        if (inputDni) {
+            inputDni.value = codigoLeido;
+        }
+        buscarAlumno(codigoLeido); // Llama directo a la búsqueda tras cerrar el modal
+    });
+});
     document.getElementById('formRecarga')?.addEventListener('submit', procesarRecarga);
     document.getElementById('formExtraccion')?.addEventListener('submit', procesarExtraccion);
     document.getElementById('formResetPin')?.addEventListener('submit', procesarResetPin);
 });
-
-// FUNCIÓN PARA ABRIR LA CÁMARA
-// FUNCIÓN PARA ABRIR LA CÁMARA
-function abrirLectorQR() {
-    document.getElementById('modalQR').style.display = 'flex';
-
-    if (!html5QrcodeScanner) {
-        html5QrcodeScanner = new Html5QrcodeScanner(
-            "reader", 
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            /* verbose= */ false
-        );
-    }
-
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-}
-
-// AL DETECTAR UN QR
-function onScanSuccess(decodedText, decodedResult) {
-    cerrarLectorQR();
-    document.getElementById('txtBuscarDni').value = decodedText;
-    buscarAlumno(decodedText);
-}
-
-// MANEJO DE ERRORES/BÚSQUEDA CONTINUA DE MARCOS
-function onScanFailure(error) {
-    // Se deja vacío o con filtro en consola para no saturar
-    //if (typeof error === 'string' && !error.includes("NotFoundException") && !error.includes("no QR code found")) {
-    //    console.warn(`[Lector QR]: ${error}`);
-  //  }
-}
-
-// CERRAR Y APAGAR CÁMARA
-function cerrarLectorQR() {
-    if (html5QrcodeScanner) {
-        html5QrcodeScanner.clear().catch(error => console.error("Error al detener cámara", error));
-    }
-    document.getElementById('modalQR').style.display = 'none';
-}
-
 
 async function buscarAlumno(criterio) {
     try {
@@ -70,7 +35,7 @@ async function buscarAlumno(criterio) {
         const data = await res.json();
 
         if (!data.success) {
-            alert(data.message);
+            alert(data.message || "Cliente no encontrado.");
             document.getElementById('panelAlumno').style.display = 'none';
             alumnoActual = null;
             return;
@@ -89,6 +54,7 @@ async function buscarAlumno(criterio) {
 
         await cargarUltimosMovimientos();
     } catch (err) {
+        console.error("Error en buscarAlumno:", err);
         alert("Error al conectar con el servidor.");
     }
 }

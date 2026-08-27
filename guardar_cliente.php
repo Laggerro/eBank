@@ -67,12 +67,13 @@ try {
         $urlFoto = subirAImgBB($data['foto_base64']);
     }
 
-    // Armamos el payload solo con lo que se puede modificar
+    // Armamos el payload con lo que se modifica
     $payload = [
         'dni'             => $dniNuevo,
         'nombre_apellido' => $nombreApellido,
         'curso'           => $data['curso'] ?? '',
-        'codigo_qr'       => !empty($data['codigo_qr']) ? $data['codigo_qr'] : null
+        'codigo_qr'       => !empty($data['codigo_qr']) ? $data['codigo_qr'] : null,
+        'registrado'      => true // 👈 Marca como registrado al guardar
     ];
 
     if ($urlFoto) {
@@ -83,19 +84,22 @@ try {
         $payload['pin'] = password_hash($data['pin'], PASSWORD_BCRYPT);
     }
 
-    if ($esEdicion && $id) {
-        // PATCH sobre el endpoint filtrando por el UUID exacto
+    // Si tiene ID (ya sea por edición o por autocompletado del CSV préviamene importado)
+    if ($id) {
+        // Hacemos PATCH para actualizar la fila existente y pasar registrado a true
         $endpoint = 'alumnos?id=eq.' . urlencode($id);
-        $metodo = 'PATCH';
+        $metodo   = 'PATCH';
     } else {
-        // Alta POST
-        $endpoint = 'alumnos';
-        $metodo = 'POST';
+        // Si no existía en la base de datos, se crea un registro totalmente nuevo
+        $endpoint        = 'alumnos';
+        $metodo          = 'POST';
         $payload['saldo'] = 0.0;
     }
 
     // Ejecutamos la consulta a Supabase
     $res = supabaseQuery($endpoint, $metodo, $payload);
+
+
 
     if (isset($res['code']) || isset($res['error'])) {
         $msgError = $res['message'] ?? 'Error al procesar en Supabase';

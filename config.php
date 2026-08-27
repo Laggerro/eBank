@@ -51,3 +51,15 @@ function supabaseQuery($endpoint, $method = 'GET', $data = null) {
 
     return json_decode($response, true);
 }
+
+if (!function_exists('registrarAuditoria')) {
+    function registrarAuditoria($tipoEvento, $usuarioOrigen, $usuarioDestino, $detalle = '') {
+        $payload = [
+            'tipo_evento'     => $tipoEvento,
+            'usuario_origen'  => $usuarioOrigen,
+            'usuario_destino' => $usuarioDestino,
+            'detalle'         => $detalle
+        ];
+        return supabaseQuery('logs_auditoria', 'POST', $payload);
+    }
+}

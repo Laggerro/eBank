@@ -59,7 +59,7 @@
             <div class="card-body p-3">
               <h6 class="text-uppercase text-warning small fw-bold mb-1">Extracciones</h6>
               <h3 id="kpiExtracciones" class="text-warning fw-bold my-1">$0.00</h3>
-              <small class="text-secondary" style="font-size: 0.75rem;">Devuelto a alumnos</small>
+              <small class="text-secondary" style="font-size: 0.75rem;">Devuelto a clientes</small>
             </div>
           </div>
         </div>
@@ -69,7 +69,7 @@
             <div class="card-body p-3">
               <h6 class="text-uppercase text-secondary small fw-bold mb-1">Activos</h6>
               <div class="d-flex justify-content-between align-items-center mt-2" style="font-size: 0.85rem;">
-                <span>Alumnos:</span> <b id="kpiAlumnos" class="text-light">0</b>
+                <span>Clientes:</span> <b id="kpiAlumnos" class="text-light">0</b>
               </div>
               <div class="d-flex justify-content-between align-items-center" style="font-size: 0.85rem;">
                 <span>Stands:</span> <b id="kpiPosnets" class="text-light">0</b>
@@ -93,7 +93,7 @@
               <thead>
                 <tr class="table-active text-secondary">
                   <th>Fecha / Hora</th>
-                  <th>Alumno (DNI)</th>
+                  <th>Cliente (DNI)</th>
                   <th>Tipo</th>
                   <th>Detalle / Stand</th>
                   <th>Monto</th>

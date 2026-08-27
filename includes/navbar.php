@@ -22,8 +22,8 @@ $esAdmin = ($rol === 'ADMIN');
     
     <div class="nav-links" style="display: flex; gap: 15px;">
       <!-- Enlaces Comunes -->
-      <a href="cajero.php" style="color: white; text-decoration: none; font-weight: 500;">Inicio / Operaciones 🏠</a>
-      <a href="alta-cliente.php" style="color: white; text-decoration: none; font-weight: 500;">Alta Cliente 👤</a>
+      <a href="cajero.php" style="color: white; text-decoration: none; font-weight: 500;">Operaciones 🏠</a>
+      <a href="alta-cliente.php" style="color: white; text-decoration: none; font-weight: 500;">Nuevo Cliente 👤</a>
       <a href="directorio.php" style="color: white; text-decoration: none; font-weight: 500;">Directorio General 👥</a>
       
       <!-- Enlaces Exclusivos de Admin -->

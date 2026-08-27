@@ -1,0 +1,51 @@
+=== INICIO DE IMPORTACION 2026-08-27 14:16:22 ===
+Fila 2 PAYLOAD: 
+Fila 2 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 3 PAYLOAD: 
+Fila 3 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 4 PAYLOAD: 
+Fila 4 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 5 PAYLOAD: 
+Fila 5 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 6 PAYLOAD: 
+Fila 6 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 7 PAYLOAD: 
+Fila 7 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 8 PAYLOAD: 
+Fila 8 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+=== INICIO DE IMPORTACION 2026-08-27 14:21:21 ===
+Fila 2 PAYLOAD: {"dni":"12345678","nombre_apellido":"Juan Perez","curso":"7mo 1ra","saldo":1500.5,"pin":"5678","foto_url":null,"codigo_qr":null,"registrado":false}
+Fila 2 SUPABASE RESP (201): [{"dni":"12345678","nombre_apellido":"Juan Perez","curso":"7mo 1ra","saldo":1500.5,"pin":"5678","creado_el":"2026-08-27T12:16:14.584131+00:00","foto_url":null,"codigo_qr":null,"id":"806717b4-6dff-4b7c-a6ef-fdc7802c2b09","registrado":false}]
+=== INICIO DE IMPORTACION 2026-08-27 14:26:27 ===
+Fila 2 PAYLOAD: {"dni":"12345678","nombre_apellido":"Juan Perez","curso":"7mo 1ra","saldo":1500.5,"pin":"5678","foto_url":null,"codigo_qr":null,"registrado":false}
+Fila 2 SUPABASE RESP (201): [{"dni":"12345678","nombre_apellido":"Juan Perez","curso":"7mo 1ra","saldo":1500.5,"pin":"5678","creado_el":"2026-08-27T12:21:20.508866+00:00","foto_url":null,"codigo_qr":null,"id":"2c07fbac-1056-488c-bb1f-8b0bcfc9fe54","registrado":false}]
+=== INICIO DE IMPORTACION 2026-08-27 14:27:37 ===
+Fila 2 PAYLOAD: 
+Fila 2 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 3 PAYLOAD: 
+Fila 3 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 4 PAYLOAD: 
+Fila 4 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 5 PAYLOAD: 
+Fila 5 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 6 PAYLOAD: 
+Fila 6 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 7 PAYLOAD: 
+Fila 7 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 8 PAYLOAD: 
+Fila 8 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+=== INICIO DE IMPORTACION 2026-08-27 14:27:46 ===
+Fila 2 PAYLOAD: 
+Fila 2 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 3 PAYLOAD: 
+Fila 3 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 4 PAYLOAD: 
+Fila 4 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 5 PAYLOAD: 
+Fila 5 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 6 PAYLOAD: 
+Fila 6 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 7 PAYLOAD: 
+Fila 7 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded
+Fila 8 PAYLOAD: 
+Fila 8 ERROR JSON: Malformed UTF-8 characters, possibly incorrectly encoded

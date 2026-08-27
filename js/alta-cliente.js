@@ -28,6 +28,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("btnCapturar")?.addEventListener("click", tomarFotoWebcam);
     document.getElementById("btnEscanearQR")?.addEventListener("click", () => iniciarEscanerQR("FORM"));
     document.getElementById("btnEscanearQRTabla")?.addEventListener("click", () => iniciarEscanerQR("TABLA"));
+    document.getElementById("txtDni")?.addEventListener("blur", buscarPorDni);
 
     // 3. Vincular Buscador en Tiempo Real
     document.getElementById("txtBuscarTabla")?.addEventListener("keyup", filtrarTabla);
@@ -94,44 +95,28 @@ function detenerWebcam() {
     }
 }
 
-// ==================== ESCÁNER QR (MODAL REUTILIZABLE) ====================
-function iniciarEscanerQR(destino) {
-    destinoQr = destino;
-    if (!modalQrBs) return;
-    modalQrBs.show();
+// ==================== VINCULACIÓN DE EVENTOS QR ====================
 
-    if (!html5QrCode) {
-        html5QrCode = new Html5Qrcode("reader");
+// 1. Escanear QR para el Formulario (Asignar código a la tarjeta/cliente)
+document.getElementById("btnEscanearQR")?.addEventListener("click", () => {
+  abrirLectorQR((codigoLeido) => {
+    const txtQr = document.getElementById("txtCodigoQr");
+    if (txtQr) {
+      txtQr.value = codigoLeido;
     }
+  });
+});
 
-    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-    html5QrCode
-        .start({ facingMode: "environment" }, config, (decodedText) => {
-            if (destinoQr === "FORM") {
-                const txtQr = document.getElementById("txtCodigoQr");
-                if (txtQr) txtQr.value = decodedText;
-            } else if (destinoQr === "TABLA") {
-                const txtBuscar = document.getElementById("txtBuscarTabla");
-                if (txtBuscar) {
-                    txtBuscar.value = decodedText;
-                    filtrarTabla();
-                }
-            }
-            modalQrBs.hide();
-        })
-        .catch((err) => {
-            console.error("Error al iniciar lector QR:", err);
-        });
-}
-
-function detenerEscanerQR() {
-    if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode
-            .stop()
-            .then(() => html5QrCode.clear())
-            .catch((err) => console.error(err));
+// 2. Escanear QR para el Buscador de la Tabla
+document.getElementById("btnEscanearQRTabla")?.addEventListener("click", () => {
+  abrirLectorQR((codigoLeido) => {
+    const txtBuscar = document.getElementById("txtBuscarTabla");
+    if (txtBuscar) {
+      txtBuscar.value = codigoLeido;
+      filtrarTabla(); // Aplica el filtro automáticamente en el listado
     }
-}
+  });
+});
 
 // ==================== FUNCIONES BASE Y CARGA DE DATOS ====================
 function blobToBase64(blob) {
@@ -357,4 +342,45 @@ function resetFormulario() {
 
     const msgDiv = document.getElementById("msgAlta");
     if (msgDiv) msgDiv.classList.add("d-none");
+}
+
+// Nueva función de búsqueda automática
+async function buscarPorDni() {
+    const dniInput = document.getElementById("txtDni").value.trim();
+    const clienteIdActual = document.getElementById("clienteId").value;
+
+    // Solo buscar si el DNI no está vacío y no estamos editando un registro ya cargado desde la tabla
+    if (!dniInput || clienteIdActual) return;
+
+    try {
+        const res = await fetch(`../buscar_alumno.php?dni=${encodeURIComponent(dniInput)}`);
+        const data = await res.json();
+
+        if (data.success && data.encontrado) {
+            const alumno = data.alumno;
+
+            // Cargar datos en el formulario
+            document.getElementById("clienteId").value = alumno.id;
+            document.getElementById("txtNombre").value = alumno.nombre_apellido || "";
+            document.getElementById("txtCurso").value = alumno.curso || "";
+            document.getElementById("txtCodigoQr").value = alumno.codigo_qr || "";
+            
+            if (alumno.foto_url) {
+                document.getElementById("imgPreview").src = alumno.foto_url;
+            }
+
+            // Cambiar textos visuales para informar que ya existe
+            if (alumno.registrado) {
+                document.getElementById("lblTituloForm").innerText = "Editar Cliente Registrado";
+                document.getElementById("btnGuardar").innerText = "Actualizar Cliente";
+            } else {
+                document.getElementById("lblTituloForm").innerText = "Completar Registro de Alumno";
+                document.getElementById("btnGuardar").innerText = "Confirmar Registro";
+            }
+            
+            document.getElementById("btnCancelarEdicion").classList.remove("d-none");
+        }
+    } catch (err) {
+        console.error("Error al buscar el DNI:", err);
+    }
 }

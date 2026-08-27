@@ -94,7 +94,7 @@ if (!isset($_SESSION['usuario']) || strtoupper($_SESSION['usuario']['rol'] ?? ''
             <!-- SECCIÓN 3: CRUD DE CURSOS / DIVISIONES -->
             <section class="card">
                 <h3>🏫 Cursos y Divisiones</h3>
-                <p class="text-subtitle">Precarga de años/cursos para el alta de alumnos</p>
+                <p class="text-subtitle">Precarga de años/cursos para el alta de clientes</p>
                 <form id="formCurso" style="margin-bottom: 20px; display: flex; gap: 10px;">
                     <input type="text" id="txtNombreCurso" placeholder="Ej: 6to 1ra Informática" style="flex: 1;" required>
                     <button type="submit" class="btn btn-primary">Agregar</button>
@@ -114,7 +114,7 @@ if (!isset($_SESSION['usuario']) || strtoupper($_SESSION['usuario']['rol'] ?? ''
 
             <!-- SECCIÓN 4: IMPORTAR ALUMNOS DESDE CSV -->
             <section class="card">
-                <h3>📁 Importar Alumnos (CSV)</h3>
+                <h3>📁 Importar Clientes (CSV)</h3>
                 <p class="text-subtitle">Carga masiva para agilizar el alta. Formato: DNI, Nombre, Curso, Saldo, Foto URL, QR</p>
                 <form id="formImportarCSV" enctype="multipart/form-data">
                     <div class="form-group">
@@ -133,8 +133,8 @@ if (!isset($_SESSION['usuario']) || strtoupper($_SESSION['usuario']['rol'] ?? ''
                     <label style="font-weight: normal;"><input type="checkbox" id="chkResetMontos"> Resetear montos acumulados a $0 (Cajeros y Posnets)</label>
                     <label style="font-weight: normal;"><input type="checkbox" id="chkVaciarTransacciones"> Vaciar historial de Transacciones</label>
                     <label style="font-weight: normal;"><input type="checkbox" id="chkVaciarLogs"> Vaciar Logs de Sistema y Auditoría</label>
-                    <label style="font-weight: normal;"><input type="checkbox" id="chkBorrarNoReg"> Eliminar alumnos NO registrados</label>
-                    <label style="font-weight: bold; color: #c53030;"><input type="checkbox" id="chkVaciarAlumnos" style="accent-color: #e53e3e;"> Vaciar TODOS los Alumnos</label>
+                    <label style="font-weight: normal;"><input type="checkbox" id="chkBorrarNoReg"> Eliminar Clientes NO registrados</label>
+                    <label style="font-weight: bold; color: #c53030;"><input type="checkbox" id="chkVaciarAlumnos" style="accent-color: #e53e3e;"> Vaciar TODOS los Clientes</label>
                 </div>
                 <button type="button" id="btnProcesarReset" class="btn btn-danger">Ejecutar Mantenimiento</button>
             </section>

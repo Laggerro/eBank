@@ -168,13 +168,3 @@ try {
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
-
-function registrarAuditoria($tipoEvento, $usuarioOrigen, $usuarioDestino, $detalle) {
-    supabaseQuery("logs_auditoria", 'POST', [
-        'tipo_evento'     => $tipoEvento,
-        'usuario_origen'  => $usuarioOrigen ?: 'SISTEMA',
-        'usuario_destino' => $usuarioDestino ?: 'N/A',
-        'detalle'         => $detalle,
-        'fecha_hora'      => date('c')
-    ]);
-}

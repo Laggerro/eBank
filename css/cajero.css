@@ -364,59 +364,10 @@ body {
   font-weight: 600;
 }
 
-/* MODALES Y OVERLAYS */
-.modal-overlay, .modal-qr-overlay {
-  display: none;
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.85);
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.modal-content, .modal-qr-content {
-  background: #ffffff;
-  padding: 1.5rem;
-  border-radius: 12px;
-  text-align: center;
-  max-width: 380px;
-  width: 90%;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-}
-
 .error-message {
   color: #e53e3e;
   font-size: 0.85rem;
   margin-top: 5px;
-}
-
-/* LECTOR DE CÓDIGO QR HTML5 */
-#reader, #readerReset {
-  width: 100%;
-  border-radius: 8px;
-  overflow: hidden;
-  border: none !important;
-  background: #000;
-}
-
-#reader video, #readerReset video {
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-#reader_dashboard_section_csr button,
-#reader_dashboard_section_swaplink {
-  color: #3182ce !important;
-  font-size: 0.85rem;
-  margin-top: 8px;
-}
-
-#reader_status_span {
-  font-size: 0.8rem;
-  color: #718096 !important;
-  background: transparent !important;
 }
 
 /* RESPONSIVO */

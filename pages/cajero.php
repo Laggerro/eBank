@@ -17,7 +17,7 @@ $puedeRetirar = !empty($usuarioLogueado['puede_retirar']) || strtoupper($usuario
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Banco Escolar - Módulo de Cajero</title>
     <link rel="stylesheet" href="../css/cajero.css">
-    <script src="https://unpkg.com/html5-qrcode"></script>
+    <link rel="stylesheet" href="../css/lector-qr.css">
     <style>
         .panel-cajero-grid {
             display: grid;
@@ -35,7 +35,7 @@ $puedeRetirar = !empty($usuarioLogueado['puede_retirar']) || strtoupper($usuario
     <main class="dashboard-container">
         <!-- Buscador Superior -->
         <section class="card card-busqueda mb-4">
-            <h2>Buscar Cuenta de Alumno</h2>
+            <h2>Buscar Cuenta de Cliente</h2>
             <div class="search-box">
                 <input type="text" id="txtBuscarDni" placeholder="Escaneá la tarjeta QR o ingresá el DNI..." autofocus>
                 <button id="btnBuscar" class="btn btn-primary">Buscar</button>
@@ -89,7 +89,7 @@ $puedeRetirar = !empty($usuarioLogueado['puede_retirar']) || strtoupper($usuario
                             <input type="number" id="montoExtraccion" class="form-control" min="1" step="0.5" placeholder="Ej: 200.00" required>
                         </div>
                         <div class="form-group mb-3">
-                            <label for="pinExtraccion">PIN del Alumno</label>
+                            <label for="pinExtraccion">PIN del Cliente</label>
                             <input type="password" id="pinExtraccion" class="form-control" maxlength="4" placeholder="****" required>
                         </div>
                         <button type="submit" class="btn btn-danger w-100">Confirmar Extracción</button>
@@ -136,14 +136,9 @@ $puedeRetirar = !empty($usuarioLogueado['puede_retirar']) || strtoupper($usuario
 
         </div>
     </main>
-<!-- MODAL LECTOR QR -->
-<div id="modalQR" class="modal-qr-overlay" style="display: none;">
-  <div class="modal-qr-content">
-    <h3>Escanear Código QR</h3>
-    <div id="reader"></div>
-    <button type="button" id="btnCerrarQR" class="btn-cancel mt-3">Cancelar / Cerrar</button>
-  </div>
-</div>
-    <script src="../js/cajero.js"></script>
+
+ <script src="https://unpkg.com/html5-qrcode"></script>
+<script src="../js/lectorQR.js"></script>
+<script src="../js/cajero.js"></script>
 </body>
 </html>

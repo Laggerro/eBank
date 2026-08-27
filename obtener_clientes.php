@@ -13,9 +13,10 @@ if (!isset($_SESSION['usuario'])) {
 }
 
 try {
-    // Pedimos explícitamente las columnas reales de la tabla alumnos
-  //$resAlumnos = supabaseQuery('alumnos?select=dni,nombre_apellido,curso,foto_url,codigo_qr,saldo&order=nombre_apellido.asc', 'GET');
-    $resAlumnos = supabaseQuery('alumnos?select=id,dni,nombre_apellido,curso,foto_url,codigo_qr&order=nombre_apellido.asc', 'GET');
+    // 🔍 Agregamos el filtro registrados=eq.true para traer SOLO los confirmados
+    $endpoint = 'alumnos?select=id,dni,nombre_apellido,curso,foto_url,codigo_qr&registrado=eq.true&order=nombre_apellido.asc';
+    
+    $resAlumnos = supabaseQuery($endpoint, 'GET');
 
     if (isset($resAlumnos['code']) || isset($resAlumnos['error'])) {
         $msgError = $resAlumnos['message'] ?? 'Error al consultar la tabla alumnos';

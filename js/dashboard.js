@@ -11,22 +11,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function actualizarTablero() {
     try {
+        // Ajustá la ruta según la carpeta del JS (ej. '../obtener_dashboard.php' o 'obtener_dashboard.php')
         const response = await fetch('../obtener_dashboard.php');
+        
+        // Si la respuesta HTTP no es exitosa (404, 500, etc.)
+        if (!response.ok) {
+            console.error(`Error HTTP ${response.status} al consultar obtener_dashboard.php`);
+            return;
+        }
+
         const data = await response.json();
 
         if (!data.success) {
-            console.error("Error al obtener datos:", data.message);
+            console.error("Error al obtener datos del backend:", data.message);
             return;
         }
 
         // --- A. ACTUALIZAR KPIS Y TARJETAS ---
-        const kpis = data.kpis;
-        document.getElementById('kpiEfectivoCaja').innerText = `$${kpis.efectivo_caja.toFixed(2)}`;
-        document.getElementById('kpiSaldoCirculante').innerText = `$${kpis.saldo_circulante.toFixed(2)}`;
-        document.getElementById('kpiVentasStands').innerText = `$${kpis.ventas_stands.toFixed(2)}`;
-        document.getElementById('kpiExtracciones').innerText = `$${kpis.extracciones.toFixed(2)}`;
-        document.getElementById('kpiAlumnos').innerText = kpis.cant_alumnos;
-        document.getElementById('kpiPosnets').innerText = kpis.cant_posnets;
+        const kpis = data.kpis || {};
+        
+        const elEfectivo = document.getElementById('kpiEfectivoCaja');
+        if (elEfectivo) elEfectivo.innerText = `$${(kpis.efectivo_caja || 0).toFixed(2)}`;
+
+        const elCirculante = document.getElementById('kpiSaldoCirculante');
+        if (elCirculante) elCirculante.innerText = `$${(kpis.saldo_circulante || 0).toFixed(2)}`;
+
+        const elVentas = document.getElementById('kpiVentasStands');
+        if (elVentas) elVentas.innerText = `$${(kpis.ventas_stands || 0).toFixed(2)}`;
+
+        const elExtracciones = document.getElementById('kpiExtracciones');
+        if (elExtracciones) elExtracciones.innerText = `$${(kpis.extracciones || 0).toFixed(2)}`;
+
+        // Contadores del bloque "Activos"
+        const elAlumnos = document.getElementById('kpiAlumnos');
+        if (elAlumnos) elAlumnos.innerText = kpis.cant_alumnos ?? 0;
+
+        const elPosnets = document.getElementById('kpiPosnets');
+        if (elPosnets) elPosnets.innerText = kpis.cant_posnets ?? 0;
 
         // --- B. ACTUALIZAR TABLA DE ÚLTIMAS TRANSACCIONES ---
         const tbody = document.getElementById('tblTransacciones');
@@ -39,8 +60,9 @@ async function actualizarTablero() {
         }
 
         tbody.innerHTML = transacciones.map(t => {
-            const fecha = new Date(t.fecha_hora).toLocaleString('es-AR');
+            const fecha = t.fecha_hora ? new Date(t.fecha_hora).toLocaleString('es-AR') : '-';
             const tipoUpper = String(t.tipo || '').toUpperCase().trim();
+            const montoNum = typeof t.monto === 'number' ? t.monto : parseFloat(t.monto || 0);
 
             let badgeClass = 'badge-cobro bg-danger';
             if (tipoUpper === 'RECARGA') {
@@ -52,11 +74,11 @@ async function actualizarTablero() {
             return `
                 <tr>
                     <td>${fecha}</td>
-                    <td><b>${t.alumno_id || '-'}</b></td>
-                    <td><span class="badge ${badgeClass}">${t.tipo}</span></td>
-                    <td>${t.stand}</td>
-                    <td><b>$${t.monto.toFixed(2)}</b></td>
-                    <td><span class="badge bg-secondary">${t.estado}</span></td>
+                    <td><b>${t.alumno_dni || '-'}</b></td>
+                    <td><span class="badge ${badgeClass}">${t.tipo || '-'}</span></td>
+                    <td>${t.stand || 'Caja Central'}</td>
+                    <td><b>$${montoNum.toFixed(2)}</b></td>
+                    <td><span class="badge bg-secondary">${t.estado || '-'}</span></td>
                 </tr>
             `;
         }).join('');
@@ -66,7 +88,7 @@ async function actualizarTablero() {
     }
 }
 
-function iniciarAutoRefresco(intervaloMs = 5000) {
+function iniciarAutoRefresco(intervaloMs = 5000) {                      
     detenerAutoRefresco();
     intervalRefresco = setInterval(async () => {
         if (!document.hidden) {

@@ -157,131 +157,153 @@ try {
 // ==========================================
         // 4. IMPORTACIÓN MASIVA DESDE CSV
         // ==========================================
+       // ==========================================
+        // 4. IMPORTACIÓN MASIVA DESDE CSV (CON LOG)
+        // ==========================================
         case 'importar_csv':
-            if (ob_get_length()) ob_clean();
+            // Asegurar que no haya salidas previas
+            while (ob_get_level()) { ob_end_clean(); }
             header('Content-Type: application/json; charset=utf-8');
 
-            if (!isset($_FILES['fileCsv']) || $_FILES['fileCsv']['error'] !== UPLOAD_ERR_OK) {
-                echo json_encode(['success' => false, 'message' => 'Error en la subida del archivo CSV.']);
-                exit;
-            }
-
-            $fileHandle = fopen($_FILES['fileCsv']['tmp_name'], 'r');
-            if (!$fileHandle) {
-                echo json_encode(['success' => false, 'message' => 'No se pudo abrir el archivo CSV temporal.']);
-                exit;
-            }
-
-            // Eliminar BOM de UTF-8 si estuviera presente
-            $bom = fread($fileHandle, 3);
-            if ($bom !== "\xEF\xBB\xBF") {
-                rewind($fileHandle);
-            }
-
-            // Omitir la fila de encabezados
-            fgetcsv($fileHandle, 1000, ",");
-
-            $insertados = 0;
-            $errores = [];
-            $filaNum = 1;
-
-            $urlSupabase = SUPABASE_URL . "/rest/v1/alumnos";
-            $apiKey = SUPABASE_KEY;
-
-            while (($row = fgetcsv($fileHandle, 1000, ",")) !== FALSE) {
-                $filaNum++;
-
-                // Ignorar filas totalmente vacías
-                if (empty($row) || (count($row) === 1 && trim($row[0]) === '')) {
-                    continue;
-                }
-
-                $dni = trim($row[0] ?? '');
-                if (empty($dni)) {
-                    continue; // Saltar filas sin DNI
-                }
-
-                // Sanitizar saldo (reemplazar coma por punto y quitar símbolos de moneda)
-                $saldoRaw = str_replace(['$', ' ', ','], ['', '', '.'], $row[3] ?? '0');
-                $saldoFinal = is_numeric($saldoRaw) ? floatval($saldoRaw) : 0.00;
-
-                $fotoUrl  = isset($row[4]) && trim($row[4]) !== '' ? trim($row[4]) : null;
-                $codigoQr = isset($row[5]) && trim($row[5]) !== '' ? trim($row[5]) : null;
-                $pinDefecto = strlen($dni) >= 4 ? substr($dni, -4) : '1234';
-
-                // Limpiar caracteres y asegurar codificación UTF-8
-                $nombreLimpio = mb_convert_encoding(trim($row[1] ?? ''), 'UTF-8', 'UTF-8, ISO-8859-1');
-                $cursoLimpio  = mb_convert_encoding(trim($row[2] ?? ''), 'UTF-8', 'UTF-8, ISO-8859-1');
-
-                $payload = [
-                    'dni'             => (string)$dni,
-                    'nombre_apellido' => $nombreLimpio,
-                    'curso'           => $cursoLimpio,
-                    'saldo'           => $saldoFinal,
-                    'pin'             => (string)$pinDefecto,
-                    'foto_url'        => $fotoUrl,
-                    'codigo_qr'       => $codigoQr,
-                    'registrado'      => false
-                ];
-
-                $jsonPayload = json_encode($payload, JSON_UNESCAPED_UNICODE);
-
-                // Validar que el JSON se haya generado correctamente
-                if ($jsonPayload === false) {
-                    $errores[] = "Fila $filaNum (DNI $dni): Error de codificación JSON - " . json_last_error_msg();
-                    continue;
-                }
-
-                // Petición cURL a Supabase
-                $ch = curl_init($urlSupabase);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonPayload);
-                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    "apikey: {$apiKey}",
-                    "Authorization: Bearer {$apiKey}",
-                    "Content-Type: application/json; charset=utf-8",
-                    "Content-Length: " . strlen($jsonPayload),
-                    "Prefer: return=representation"
-                ]);
-
-                $responseBody = curl_exec($ch);
-                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                $curlErr = curl_error($ch);
-                curl_close($ch);
-
-                if ($curlErr) {
-                    $errores[] = "Fila $filaNum (DNI $dni): Error cURL: " . $curlErr;
-                } else if ($httpCode >= 400) {
-                    $errores[] = "Fila $filaNum (DNI $dni - HTTP $httpCode): " . $responseBody;
-                } else {
-                    $insertados++;
-                }
-            }
-
-            fclose($fileHandle);
-
-            // Respuesta final estructurada
-            if (count($errores) > 0 && $insertados === 0) {
+            // Capturar errores fatales u ocultos de PHP
+            set_error_handler(function($errno, $errstr, $errfile, $errline) {
                 echo json_encode([
                     'success' => false,
-                    'message' => "No se pudo insertar ningún alumno. Revisá los errores adjuntos.",
+                    'message' => "Error PHP interno ($errno): $errstr en $errfile línea $errline"
+                ]);
+                exit;
+            });
+
+            try {
+                if (!isset($_FILES['fileCsv']) || $_FILES['fileCsv']['error'] !== UPLOAD_ERR_OK) {
+                    echo json_encode(['success' => false, 'message' => 'Error en la subida del archivo CSV.']);
+                    exit;
+                }
+
+                $fileHandle = fopen($_FILES['fileCsv']['tmp_name'], 'r');
+                if (!$fileHandle) {
+                    echo json_encode(['success' => false, 'message' => 'No se pudo abrir el archivo CSV temporal.']);
+                    exit;
+                }
+
+                // Archivo de log local para inspección
+                $logFile = __DIR__ . '/log_importacion.txt';
+                file_put_contents($logFile, "=== INICIO DE IMPORTACION " . date('Y-m-d H:i:s') . " ===\n", FILE_APPEND);
+
+                // Eliminar BOM de UTF-8 si estuviera presente
+                $bom = fread($fileHandle, 3);
+                if ($bom !== "\xEF\xBB\xBF") {
+                    rewind($fileHandle);
+                }
+
+                // Omitir encabezados
+                fgetcsv($fileHandle, 1000, ",");
+
+                $insertados = 0;
+                $errores = [];
+                $filaNum = 1;
+
+                $urlSupabase = SUPABASE_URL . "/rest/v1/alumnos";
+                $apiKey = SUPABASE_KEY;
+
+                while (($row = fgetcsv($fileHandle, 1000, ",")) !== FALSE) {
+                    $filaNum++;
+
+                    if (empty($row) || (count($row) === 1 && trim($row[0]) === '')) {
+                        continue;
+                    }
+
+                    $dni = trim($row[0] ?? '');
+                    if (empty($dni)) continue;
+
+                    $saldoRaw = str_replace(['$', ' ', ','], ['', '', '.'], $row[3] ?? '0');
+                    $saldoFinal = is_numeric($saldoRaw) ? floatval($saldoRaw) : 0.00;
+
+                    $fotoUrl  = isset($row[4]) && trim($row[4]) !== '' ? trim($row[4]) : null;
+                    $codigoQr = isset($row[5]) && trim($row[5]) !== '' ? trim($row[5]) : null;
+                    $pinDefecto = strlen($dni) >= 4 ? substr($dni, -4) : '1234';
+
+                   
+$nombreRaw = trim($row[1] ?? '');
+$cursoRaw  = trim($row[2] ?? '');
+
+$nombreLimpio = mb_detect_encoding($nombreRaw, 'UTF-8', true) ? $nombreRaw : utf8_encode($nombreRaw);
+$cursoLimpio  = mb_detect_encoding($cursoRaw, 'UTF-8', true) ? $cursoRaw : utf8_encode($cursoRaw);
+
+
+
+                    $payload = [
+                        'dni'             => (string)$dni,
+                        'nombre_apellido' => $nombreLimpio,
+                        'curso'           => $cursoLimpio,
+                        'saldo'           => $saldoFinal,
+                        'pin'             => (string)$pinDefecto,
+                        'foto_url'        => $fotoUrl,
+                        'codigo_qr'       => $codigoQr,
+                        'registrado'      => false
+                    ];
+
+                    $jsonPayload = json_encode($payload, JSON_UNESCAPED_UNICODE);
+
+                    // LOG: Registrar el JSON exactamente como se construyó
+                    file_put_contents($logFile, "Fila $filaNum PAYLOAD: " . $jsonPayload . "\n", FILE_APPEND);
+
+                    if ($jsonPayload === false) {
+                        $errJson = json_last_error_msg();
+                        $errores[] = "Fila $filaNum (DNI $dni): Error JSON - $errJson";
+                        file_put_contents($logFile, "Fila $filaNum ERROR JSON: $errJson\n", FILE_APPEND);
+                        continue;
+                    }
+
+                    // Petición cURL
+                    $ch = curl_init($urlSupabase);
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_POST, true);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonPayload);
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                        "apikey: {$apiKey}",
+                        "Authorization: Bearer {$apiKey}",
+                        "Content-Type: application/json; charset=utf-8",
+                        "Content-Length: " . strlen($jsonPayload),
+                        "Prefer: return=representation"
+                    ]);
+
+                    $responseBody = curl_exec($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    $curlErr = curl_error($ch);
+                    curl_close($ch);
+
+                    // LOG: Registrar respuesta de Supabase
+                    file_put_contents($logFile, "Fila $filaNum SUPABASE RESP ($httpCode): " . $responseBody . "\n", FILE_APPEND);
+
+                    if ($curlErr) {
+                        $errores[] = "Fila $filaNum (DNI $dni): Error cURL - $curlErr";
+                    } else if ($httpCode >= 400) {
+                        $errores[] = "Fila $filaNum (DNI $dni - HTTP $httpCode): " . $responseBody;
+                    } else {
+                        $insertados++;
+                    }
+                }
+
+                fclose($fileHandle);
+
+                echo json_encode([
+                    'success' => $insertados > 0,
+                    'message' => "Proceso finalizado. Insertados: $insertados.",
                     'errores' => $errores
                 ]);
-            } else if (count($errores) > 0) {
+                exit;
+
+            } catch (Throwable $e) {
                 echo json_encode([
-                    'success' => true,
-                    'message' => "Se insertaron $insertados alumnos correctamente, pero se detectaron errores en algunas filas.",
-                    'errores' => $errores
+                    'success' => false,
+                    'message' => 'Excepción fatal: ' . $e->getMessage(),
+                    'file'    => $e->getFile(),
+                    'line'    => $e->getLine()
                 ]);
-            } else {
-                echo json_encode([
-                    'success' => true,
-                    'message' => "Se importaron los $insertados alumnos correctamente en la base de datos."
-                ]);
+                exit;
             }
-            exit;
             break;
         // ==========================================
         // 5. MANTENIMIENTO Y RESET DE BD

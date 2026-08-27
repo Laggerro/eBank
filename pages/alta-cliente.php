@@ -8,6 +8,7 @@
   <!-- BOOTSTRAP 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../css/cajero.css">
+  <link rel="stylesheet" href="../css/lector-qr.css">
 
   <!-- ESCÁNER QR Y SUPABASE SDK -->
   <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
@@ -99,7 +100,7 @@
       <div class="card-header bg-white py-3">
         <div class="row align-items-center g-2">
           <div class="col-md-5">
-            <h5 class="fw-bold mb-0">📋 Listado de Clientes</h5>
+            <h5 class="fw-bold mb-0">📋 Listado de Clientes registrados</h5>
           </div>
           <!-- BUSCADOR CON BOTÓN DE CÁMARA QR -->
           <div class="col-md-7">
@@ -135,22 +136,7 @@
 
   </main>
 
-  <!-- MODAL CÁMARA ESCÁNER QR (REUTILIZABLE PARA FORM Y BUSCADOR) -->
-  <div class="modal fade" id="modalLectorQR" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header bg-dark text-white">
-          <h5 class="modal-title fw-bold" id="lblModalQr">Escanear Tarjeta QR</h5>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" id="btnCerrarLectorQR"></button>
-        </div>
-        <div class="modal-body text-center">
-          <div id="reader" style="width: 100%; max-width: 350px; margin: 0 auto;"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL WEBCAM FOTO PERFIL -->
+   <!-- MODAL WEBCAM FOTO PERFIL -->
   <div class="modal fade" id="modalCamara" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
@@ -172,6 +158,7 @@
 
   <!-- SCRIPTS BOOTSTRAP Y LÓGICA -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../js/lectorQR.js"></script>
   <script src="../js/alta-cliente.js"></script>
 </body>
 </html>
