@@ -7,11 +7,8 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$usrSesion = $_SESSION['usuario'] ?? null;
-if (!$usrSesion) {
-    echo json_encode(['success' => false, 'message' => 'Sesión expirada']);
-    exit;
-}
+exigirRoles(['ADMIN', 'CAJERO']);
+$usrSesion = $_SESSION['usuario'];
 
 $input = json_decode(file_get_contents('php://input'), true);
 
@@ -22,7 +19,7 @@ if (!isset($input['dni']) || empty($input['dni'])) {
 
 $dni = rawurlencode($input['dni']);
 $dataUpdate = [
-    'qr_code' => $input['qr_code'] ?? null,
+    'codigo_qr' => $input['codigo_qr'] ?? ($input['qr_code'] ?? null),
     'foto_url' => $input['foto_url'] ?? null
 ];
 

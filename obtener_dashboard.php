@@ -21,10 +21,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!isset($_SESSION['usuario'])) {
-    echo json_encode(['success' => false, 'message' => 'Sesión no iniciada']);
-    exit;
-}
+exigirRoles(['ADMIN']);
 
 try {
     // 1. Alumnos REGISTRADOS y Saldo Circulante
@@ -82,7 +79,7 @@ try {
     $efectivoCaja = $totalRecargas - $totalExtracciones;
 
     // 4. Últimas Transacciones
-    $ultimas = supabaseQuery('transacciones?select=id,alumno_dni,monto,tipo,estado,fecha_hora,posnet_id&order=fecha_hora.desc&limit=10');
+    $ultimas = supabaseQuery('transacciones?select=id,alumno_id,alumnos(dni),monto,tipo,estado,fecha_hora,posnet_id&order=fecha_hora.desc&limit=10');
     if (isset($ultimas['code']) || isset($ultimas['error']) || !is_array($ultimas)) {
         $ultimas = [];
     }
@@ -93,7 +90,7 @@ try {
         
         $tablaFormateada[] = [
             'fecha_hora' => $u['fecha_hora'] ?? null,
-            'alumno_dni' => $u['alumno_dni'] ?? '-',
+            'dni'        => $u['alumnos']['dni'] ?? '-',
             'tipo'       => $u['tipo'] ?? '-',
             'stand'      => 'Caja / Stand #' . ($u['posnet_id'] ?? 'Central'),
             'monto'      => floatval($u['monto'] ?? 0),

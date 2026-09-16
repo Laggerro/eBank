@@ -7,10 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!isset($_SESSION['usuario'])) {
-    echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
-    exit;
-}
+exigirRoles(['ADMIN', 'CAJERO']);
 
 try {
     // 1. Alumnos (Traemos todos los alumnos, tengan o no QR)

@@ -65,7 +65,9 @@ async function cargarUltimosMovimientos() {
     tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">Cargando...</td></tr>`;
 
     try {
-        const res = await fetch(`../procesar_cajero.php?accion=movimientos&alumno_id=${alumnoActual.id}`);
+        const res = await fetch(`../procesar_cajero.php?accion=movimientos&alumno_id=${alumnoActual.id}`, {
+            credentials: 'same-origin'
+        });
         const data = await res.json();
 
         if (!data.success || !data.movimientos || data.movimientos.length === 0) {
@@ -78,14 +80,17 @@ async function cargarUltimosMovimientos() {
             const fecha = fechaObj.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
             const tipoUpper = String(m.tipo || '').toUpperCase();
-            const esResta = ['EXTRACCION', 'COBRO', 'COMPRA'].includes(tipoUpper);
-            const clase = tipoUpper === 'RECARGA' ? 'badge-recarga' : (esResta ? 'badge-extraccion' : 'badge-posnet');
+            const estadoUpper = String(m.estado || '').toUpperCase();
+            const estaAnulada = estadoUpper === 'ANULADA';
+            const esResta = !estaAnulada && ['EXTRACCION', 'COBRO', 'COMPRA'].includes(tipoUpper);
+            const clase = estaAnulada ? 'badge-posnet' : (tipoUpper === 'RECARGA' ? 'badge-recarga' : (esResta ? 'badge-extraccion' : 'badge-posnet'));
+            const tipoVisible = estaAnulada ? `${m.tipo} (ANULADA)` : m.tipo;
 
             return `
                 <tr>
                     <td><small>${fecha}</small></td>
-                    <td><span class="${clase}">${m.tipo}</span></td>
-                    <td style="font-weight:bold; color: ${esResta ? '#dc3545' : '#28a745'}">
+                    <td><span class="${clase}">${tipoVisible}</span></td>
+                    <td style="font-weight:bold; color: ${estaAnulada ? '#28a745' : (esResta ? '#dc3545' : '#28a745')}" title="${estadoUpper}">
                         ${esResta ? '-' : '+'}$${Number(m.monto).toFixed(2)}
                     </td>
                 </tr>`;

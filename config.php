@@ -1,6 +1,30 @@
 <?php
 // C:\xampp\htdocs\eBank\config.php
+ini_set('session.gc_maxlifetime', '2592000');
+session_set_cookie_params([
+    'lifetime' => 2592000,
+    'path' => '/',
+    'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
 session_start();
+
+function exigirRoles(array $roles): void
+{
+    $rolActual = strtoupper(trim($_SESSION['usuario']['rol'] ?? ''));
+
+    if (!in_array($rolActual, $roles, true)) {
+        http_response_code(403);
+        echo json_encode([
+            'success' => false,
+            'message' => $rolActual === ''
+                ? 'Sesión ausente o expirada. Vuelva a iniciar sesión.'
+                : 'Acceso no autorizado para el rol ' . $rolActual . '.'
+        ]);
+        exit;
+    }
+}
 
 define('SUPABASE_URL', 'https://hkxigkizqedbirytsrmb.supabase.co');
 define('SUPABASE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhreGlna2l6cWVkYmlyeXRzcm1iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY1MTIzNzEsImV4cCI6MjEwMjA4ODM3MX0.DLgrW2Z-32cJljfV0MYUKsxKcsG2C0WFI58KTVIQXJU');
@@ -19,7 +43,7 @@ function supabaseQuery($endpoint, $method = 'GET', $data = null) {
     
     $headers = [
         'apikey: ' . SUPABASE_KEY,
-        'Authorization: Bearer ' . SUPABASE_KEY,
+        'Authorization: Bearer ' . ($_SESSION['supabase_access_token'] ?? SUPABASE_KEY),
         'Content-Type: application/json',
         'Prefer: return=representation'
     ];
@@ -62,4 +86,22 @@ if (!function_exists('registrarAuditoria')) {
         ];
         return supabaseQuery('logs_auditoria', 'POST', $payload);
     }
+}
+
+function supabaseAuthRequest($endpoint, $data) {
+    $ch = curl_init(SUPABASE_URL . '/auth/v1/' . ltrim($endpoint, '/'));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'apikey: ' . SUPABASE_KEY,
+        'Content-Type: application/json'
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    return ['status' => $httpCode, 'data' => json_decode($response, true)];
 }

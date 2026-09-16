@@ -18,7 +18,9 @@ if (strtolower($user) === 'consulta') {
         'id' => 0,
         'usuario' => 'consulta',
         'nombre' => 'Consulta Pública',
-        'rol' => 'CONSULTA'
+        'rol' => 'CONSULTA',
+        'puede_retirar' => false,
+        'puede_blanquear' => false
     ];
     echo json_encode(['success' => true, 'redirect' => 'consulta-saldo.html']);
     exit;
@@ -52,7 +54,9 @@ if (!empty($resUser) && is_array($resUser) && !isset($resUser['error']) && isset
         'usuario' => $u['usuario'],
         'nombre' => $u['nombre'] ?? $u['usuario'],
         'rol' => $rolNormalizado,
-        'puede_retirar' => ($u['puede_retirar'] == true || $u['puede_retirar'] == 1)
+        'puede_retirar' => ($u['puede_retirar'] == true || $u['puede_retirar'] == 1),
+        // AGREGADO: Mapeo del nuevo permiso
+        'puede_blanquear' => (!empty($u['puede_blanquear']) && ($u['puede_blanquear'] == true || $u['puede_blanquear'] == 1))
     ];
 } else {
     // 3. SI NO ESTÁ EN 'usuarios_banco', BUSCAR EN TABLA 'posnets'
@@ -78,8 +82,53 @@ if (!empty($resUser) && is_array($resUser) && !isset($resUser['error']) && isset
             'usuario' => $p['usuario'],
             'nombre' => $p['nombre_posnet'] ?? $p['usuario'],
             'rol' => 'POSNET',
-            'puede_retirar' => false
+            'puede_retirar' => false,
+            'puede_blanquear' => false
         ];
+    }
+}
+
+// 3. Alumnos: Supabase Auth + perfil vinculado. El usuario es el email.
+if (!$userData && filter_var($user, FILTER_VALIDATE_EMAIL) && $pass !== '') {
+    $auth = supabaseAuthRequest('token?grant_type=password', [
+        'email' => strtolower($user),
+        'password' => $pass
+    ]);
+
+    if ($auth['status'] < 200 || $auth['status'] >= 300) {
+        $authMessage = $auth['data']['error_description']
+            ?? $auth['data']['msg']
+            ?? $auth['data']['message']
+            ?? 'No se pudo iniciar sesión con ese email.';
+        echo json_encode(['success' => false, 'message' => $authMessage]);
+        exit;
+    }
+
+    if (!empty($auth['data']['user']['id'])) {
+        $_SESSION['supabase_access_token'] = $auth['data']['access_token'] ?? null;
+        $authUserId = urlencode($auth['data']['user']['id']);
+        $perfil = supabaseQuery(
+            'perfiles_alumnos?id=eq.' . $authUserId . '&activo=eq.true&select=id,alumno_id,alumnos(*)',
+            'GET'
+        );
+
+        if (!empty($perfil[0]['alumnos'])) {
+            $alumno = $perfil[0]['alumnos'];
+            $_SESSION['usuario'] = [
+                'id' => $alumno['id'],
+                'auth_id' => $auth['data']['user']['id'],
+                'usuario' => $user,
+                'nombre' => $alumno['nombre_apellido'],
+                'rol' => 'ALUMNO'
+            ];
+            supabaseQuery('perfiles_alumnos?id=eq.' . $authUserId, 'PATCH', ['ultimo_acceso' => date('c')]);
+            echo json_encode(['success' => true, 'redirect' => 'pages/alumno.php']);
+            exit;
+        }
+
+        unset($_SESSION['supabase_access_token']);
+        echo json_encode(['success' => false, 'message' => 'El email existe, pero todavía no está vinculado a un alumno.']);
+        exit;
     }
 }
 

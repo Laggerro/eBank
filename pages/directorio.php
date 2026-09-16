@@ -1,3 +1,11 @@
+<?php
+require_once __DIR__ . '/../config.php';
+
+if (!in_array(strtoupper($_SESSION['usuario']['rol'] ?? ''), ['ADMIN', 'CAJERO'], true)) {
+  header('Location: ../index.html');
+  exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>

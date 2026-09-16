@@ -3,11 +3,7 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/config.php';
 
-// Control de Sesión
-if (!isset($_SESSION['usuario'])) {
-    echo json_encode(['success' => false, 'message' => 'Sesión expirada o no autorizada.']);
-    exit;
-}
+exigirRoles(['ADMIN', 'CAJERO']);
 
 $usuarioLogueado = $_SESSION['usuario'];
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
@@ -143,26 +139,27 @@ try {
             break;
 
         // 5. RESTAURAR PIN
-        case 'reset_pin':
-            $alumnoId = trim($input['alumno_id'] ?? '');
-            $nuevoPin = trim($input['nuevo_pin'] ?? '');
+       case 'reset_pin':
+    // Validar permiso
+    $puedeBlanqueas = !empty($usuarioLogueado['puede_blanquear']) || strtoupper($usuarioLogueado['rol'] ?? '') === 'ADMIN';
+    if (!$puedeBlanqueas) {
+        throw new Exception("No tiene permisos para blanquear el PIN de los usuarios.");
+    }
 
-            if (strlen($nuevoPin) !== 4 || !is_numeric($nuevoPin)) {
-                throw new Exception("El PIN debe contener exactamente 4 números.");
-            }
-
-            $pinHash = password_hash($nuevoPin, PASSWORD_BCRYPT);
-
-            supabaseQuery("alumnos?id=eq." . urlencode($alumnoId), 'PATCH', ['pin' => $pinHash]);
-
-            registrarAuditoria('BLANQUEO_PIN', $usuarioLogueado['usuario'] ?? 'CAJERO', $alumnoId, "Blanqueo y cambio de PIN de alumno");
-
-            echo json_encode(['success' => true, 'message' => '¡PIN actualizado exitosamente!']);
-            break;
-
-        default:
-            echo json_encode(['success' => false, 'message' => 'Acción no válida.']);
-            break;
+    $alumnoId = trim($input['alumno_id'] ?? '');
+    $nuevoPin = trim($input['nuevo_pin'] ?? '');
+    
+    if (strlen($nuevoPin) !== 4 || !is_numeric($nuevoPin)) {
+        throw new Exception("El PIN debe contener exactamente 4 números.");
+    }
+    
+    $pinHash = password_hash($nuevoPin, PASSWORD_BCRYPT);
+    supabaseQuery("alumnos?id=eq." . urlencode($alumnoId), 'PATCH', ['pin' => $pinHash]);
+    
+    registrarAuditoria('BLANQUEO_PIN', $usuarioLogueado['usuario'] ?? 'CAJERO', $alumnoId, "Blanqueo y cambio de PIN de alumno");
+    
+    echo json_encode(['success' => true, 'message' => '¡PIN actualizado exitosamente!']);
+    break;
     }
 
 } catch (Exception $e) {

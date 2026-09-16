@@ -7,14 +7,11 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!isset($_SESSION['usuario'])) {
-    echo json_encode(['success' => false, 'message' => 'Acceso denegado: Sesión no iniciada']);
-    exit;
-}
+exigirRoles(['ADMIN', 'CAJERO']);
 
 try {
     // 🔍 Agregamos el filtro registrados=eq.true para traer SOLO los confirmados
-    $endpoint = 'alumnos?select=id,dni,nombre_apellido,curso,foto_url,codigo_qr&registrado=eq.true&order=nombre_apellido.asc';
+    $endpoint = 'alumnos?select=id,dni,nombre_apellido,curso,saldo,foto_url,codigo_qr&registrado=eq.true&order=nombre_apellido.asc';
     
     $resAlumnos = supabaseQuery($endpoint, 'GET');
 

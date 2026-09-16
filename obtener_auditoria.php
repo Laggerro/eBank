@@ -21,10 +21,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!isset($_SESSION['usuario'])) {
-    echo json_encode(['success' => false, 'message' => 'Sesión no iniciada']);
-    exit;
-}
+exigirRoles(['ADMIN']);
 
 try {
     $filtroTipo  = trim($_GET['tipo'] ?? 'TODOS');
@@ -38,7 +35,7 @@ try {
     $tiposMonetarios = ['TODOS', 'RECARGA', 'COBRO', 'EXTRACCION'];
     if (in_array($filtroTipo, $tiposMonetarios)) {
         
-        $endpointTrans = 'transacciones?select=id,alumno_dni,monto,tipo,estado,fecha_hora,posnet_id,usuario_id&order=fecha_hora.desc&limit=100';
+        $endpointTrans = 'transacciones?select=id,alumno_id,alumnos(dni),monto,tipo,estado,fecha_hora,posnet_id,usuario_id&order=fecha_hora.desc&limit=100';
         if ($filtroTipo !== 'TODOS') {
             $endpointTrans .= '&tipo=eq.' . urlencode($filtroTipo);
         }
@@ -70,7 +67,7 @@ try {
                 $registrosUnificados[] = [
                     'fecha'      => $t['fecha_hora'] ?? '',
                     'tipo'       => $tipoUpper,
-                    'afectado'   => 'DNI Alumno: ' . ($t['alumno_dni'] ?? '-'),
+                    'afectado'   => 'DNI Alumno: ' . ($t['alumnos']['dni'] ?? '-'),
                     'operador'   => $operador,
                     'origen'     => $origen,
                     'detalle'    => '$' . number_format($montoNum, 2, '.', ''),

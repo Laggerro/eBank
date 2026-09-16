@@ -9,11 +9,7 @@ ini_set('display_startup_errors', 1);
 header('Content-Type: application/json');
 require_once __DIR__ . '/config.php';
 
-// Validar que el usuario esté autenticado y sea ADMIN
-if (!isset($_SESSION['usuario']) || strtoupper($_SESSION['usuario']['rol'] ?? '') !== 'ADMIN') {
-    echo json_encode(['success' => false, 'message' => 'Acceso no autorizado.']);
-    exit;
-}
+exigirRoles(['ADMIN']);
 
 $input = json_decode(file_get_contents('php://input'), true) ?? [];
 $action = $_GET['action'] ?? ($input['action'] ?? '');
@@ -33,7 +29,7 @@ try {
         // 1. GESTIÓN DE USUARIOS DEL BANCO
         // ==========================================
         case 'listar_usuarios':
-            $res = supabaseQuery("usuarios_banco?rol=neq.POSNET&select=*&order=id.asc", "GET");
+            $res = supabaseQuery("usuarios_banco?rol=neq.POSNET&select=id,usuario,nombre,rol,activo,puede_retirar,puede_blanquear&order=id.asc", "GET");
             echo json_encode(['success' => true, 'data' => is_array($res) ? $res : []]);
             break;
 
@@ -90,7 +86,7 @@ try {
         // 2. GESTIÓN DE TERMINALES POSNET
         // ==========================================
         case 'listar_posnets':
-            $res = supabaseQuery("usuarios_banco?rol=eq.POSNET&select=*&order=id.asc", "GET");
+            $res = supabaseQuery("usuarios_banco?rol=eq.POSNET&select=id,usuario,nombre,activo,monto_acumulado,cant_transacciones&order=id.asc", "GET");
             echo json_encode(['success' => true, 'data' => is_array($res) ? $res : []]);
             break;
 
@@ -104,7 +100,7 @@ try {
             ];
 
             if (!empty($input['password_posnet'])) {
-                $payload['password_hash'] = trim($input['password_posnet']);
+                $payload['password_hash'] = password_hash($input['password_posnet'], PASSWORD_DEFAULT);
             }
 
             if ($id) {

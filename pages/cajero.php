@@ -2,19 +2,21 @@
 // pages/cajero.php
 require_once __DIR__ . '/../config.php';
 
-if (!isset($_SESSION['usuario'])) {
+if (!in_array(strtoupper($_SESSION['usuario']['rol'] ?? ''), ['ADMIN', 'CAJERO'], true)) {
     header("Location: ../index.html");
     exit;
 }
 
 $usuarioLogueado = $_SESSION['usuario'];
 $puedeRetirar = !empty($usuarioLogueado['puede_retirar']) || strtoupper($usuarioLogueado['rol'] ?? '') === 'ADMIN';
+$puedeBlanquear = !empty($usuarioLogueado['puede_blanquear']) || strtoupper($usuarioLogueado['rol'] ?? '') === 'ADMIN';
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Banco Escolar - Módulo de Cajero</title>
     <link rel="stylesheet" href="../css/cajero.css">
     <link rel="stylesheet" href="../css/lector-qr.css">
@@ -98,6 +100,7 @@ $puedeRetirar = !empty($usuarioLogueado['puede_retirar']) || strtoupper($usuario
                 <?php endif; ?>
 
                 <!-- Restaurar PIN -->
+                <?php if ($puedeBlanquear): ?>
                 <section class="card card-pin">
                     <h3>🔑 Blanqueo / Restauración de PIN</h3>
                     <form id="formResetPin" class="mt-2">
@@ -108,6 +111,7 @@ $puedeRetirar = !empty($usuarioLogueado['puede_retirar']) || strtoupper($usuario
                         <button type="submit" class="btn btn-warning w-100">Restaurar PIN</button>
                     </form>
                 </section>
+                <?php endif; ?>
             </div>
 
             <!-- COLUMNA 3: ULTIMOS MOVIMIENTOS (DERECHA) -->
@@ -139,6 +143,7 @@ $puedeRetirar = !empty($usuarioLogueado['puede_retirar']) || strtoupper($usuario
 
  <script src="https://unpkg.com/html5-qrcode"></script>
 <script src="../js/lectorQR.js"></script>
-<script src="../js/cajero.js"></script>
+<script src="../js/sesion.js?v=1"></script>
+<script src="../js/cajero.js?v=2"></script>
 </body>
 </html>

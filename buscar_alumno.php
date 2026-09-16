@@ -7,10 +7,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-if (!isset($_SESSION['usuario'])) {
-    echo json_encode(['success' => false, 'message' => 'Acceso denegado']);
-    exit;
-}
+exigirRoles(['ADMIN', 'CAJERO']);
 
 $dni = trim($_GET['dni'] ?? '');
 

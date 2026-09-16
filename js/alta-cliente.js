@@ -201,6 +201,7 @@ function renderizarTabla(clientes) {
                 <td><small class="text-muted">${qrCodigo}</small></td>
                 <td class="text-center">
                     <button type="button" onclick="editarCliente('${c.id}')" class="btn btn-sm btn-outline-primary fw-bold"> ✏️ Editar</button>
+                    <button type="button" onclick="eliminarCliente('${c.id}')" class="btn btn-sm btn-outline-danger fw-bold"> 🗑️ Eliminar</button>
                 </td>
             </tr>`;
         })
@@ -271,6 +272,9 @@ async function guardarCliente(e) {
     const cursoInput = document.getElementById("txtCurso").value;
     const pinInput = document.getElementById("txtPin").value.trim();
     const qrInput = document.getElementById("txtCodigoQr").value.trim();
+    const emailCuenta = document.getElementById("txtEmailCuenta")?.value.trim() || "";
+    const passwordCuenta = document.getElementById("txtPasswordCuenta")?.value || "";
+    const crearCuenta = document.getElementById("chkCrearCuenta")?.checked === true;
 
     // Armamos el objeto PAYLOAD justo con lo que el usuario acaba de escribir
     const payload = {
@@ -279,8 +283,14 @@ async function guardarCliente(e) {
         dni: dniInput,
         nombre_apellido: nombreInput,
         curso: cursoInput,
-        codigo_qr: qrInput || null
+        codigo_qr: qrInput || null,
+        crear_cuenta: crearCuenta
     };
+
+    if (crearCuenta) {
+        payload.email_cuenta = emailCuenta;
+        payload.password_cuenta = passwordCuenta;
+    }
 
     // Si escribieron un nuevo PIN, lo adjuntamos
     if (pinInput !== "") {
@@ -298,6 +308,7 @@ async function guardarCliente(e) {
         const res = await fetch("../guardar_cliente.php", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "same-origin",
             body: JSON.stringify(payload)
         });
 
@@ -339,6 +350,8 @@ function resetFormulario() {
     document.getElementById("btnGuardar").innerText = "Registrar Cliente";
     document.getElementById("btnCancelarEdicion").classList.add("d-none");
     document.getElementById("helpPin")?.classList.add("d-none");
+    const chkCrearCuenta = document.getElementById("chkCrearCuenta");
+    if (chkCrearCuenta) chkCrearCuenta.checked = false;
 
     const msgDiv = document.getElementById("msgAlta");
     if (msgDiv) msgDiv.classList.add("d-none");
@@ -382,5 +395,33 @@ async function buscarPorDni() {
         }
     } catch (err) {
         console.error("Error al buscar el DNI:", err);
+    }
+}
+
+async function eliminarCliente(id) {
+    const cliente = listaClientesCache.find((item) => String(item.id) === String(id));
+    const saldo = Number(cliente?.saldo || 0);
+    const nombre = cliente?.nombre_apellido || "este alumno";
+
+    if (!confirm(`¿Querés dar de baja a ${nombre}?\n\nSolo se puede hacer si su saldo es $0.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('../guardar_cliente.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accion: 'eliminar', id })
+        });
+        const result = await response.json();
+        if (!result.success) {
+            alert(result.message || `No se puede dar de baja. Saldo actual: $${saldo.toFixed(2)}`);
+            return;
+        }
+
+        alert(result.message);
+        await cargarTablaClientes();
+    } catch (error) {
+        alert('No se pudo procesar la baja del alumno.');
     }
 }

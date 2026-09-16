@@ -1,3 +1,11 @@
+<?php
+require_once __DIR__ . '/../config.php';
+
+if (!in_array(strtoupper($_SESSION['usuario']['rol'] ?? ''), ['ADMIN', 'CAJERO'], true)) {
+  header('Location: ../index.html');
+  exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -74,6 +82,23 @@
               <label for="txtPin" class="form-label fw-bold">PIN de Seguridad (4 dígitos)</label>
               <input type="password" id="txtPin" class="form-control" maxlength="4" placeholder="****">
               <small id="helpPin" class="form-text text-muted d-none">(Dejar en blanco para mantener el actual)</small>
+            </div>
+
+            <div class="col-md-6">
+              <label for="txtEmailCuenta" class="form-label fw-bold">Email de acceso (opcional)</label>
+              <input type="email" id="txtEmailCuenta" class="form-control" placeholder="alumno@ejemplo.com">
+            </div>
+            <div class="col-md-6">
+              <label for="txtPasswordCuenta" class="form-label fw-bold">Contraseña web (opcional)</label>
+              <input type="password" id="txtPasswordCuenta" class="form-control" minlength="6" placeholder="Mínimo 6 caracteres">
+            </div>
+            <div class="col-12">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="chkCrearCuenta">
+                <label class="form-check-label text-muted" for="chkCrearCuenta">
+                  Crear o recrear la cuenta de acceso del alumno
+                </label>
+              </div>
             </div>
 
             <!-- CÓDIGO QR / TARJETA EN FORMULARIO -->
@@ -159,6 +184,7 @@
   <!-- SCRIPTS BOOTSTRAP Y LÓGICA -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="../js/lectorQR.js"></script>
-  <script src="../js/alta-cliente.js"></script>
+  <script src="../js/sesion.js?v=1"></script>
+  <script src="../js/alta-cliente.js?v=2"></script>
 </body>
 </html>

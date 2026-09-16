@@ -4,7 +4,7 @@ require_once '../config.php';
 
 // Validar que el usuario logueado sea estrictamente ADMIN
 if (!isset($_SESSION['usuario']) || strtoupper($_SESSION['usuario']['rol'] ?? '') !== 'ADMIN') {
-    header('Location: ../login.php');
+    header('Location: ../index.html');
     exit;
 }
 ?>

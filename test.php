@@ -2,10 +2,15 @@
 // test.php
 require_once 'config.php';
 
+if (strtoupper($_SESSION['usuario']['rol'] ?? '') !== 'ADMIN') {
+	http_response_code(404);
+	exit;
+}
+
 echo "<h2>Prueba de Conexión a Supabase</h2>";
 
 $userBuscado = 'admin';
-$endpoint = "usuarios_banco?usuario=eq." . urlencode($userBuscado) . "&select=*";
+$endpoint = "usuarios_banco?usuario=eq." . urlencode($userBuscado) . "&select=id,usuario,nombre,rol,activo";
 
 echo "<p><b>URL consultada:</b> " . SUPABASE_URL . '/rest/v1/' . $endpoint . "</p>";
 
