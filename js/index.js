@@ -5,12 +5,54 @@ document.addEventListener("DOMContentLoaded", () => {
     const errorDiv = document.getElementById("errorMessage");
     const usernameInput = document.getElementById("username");
     const passInput = document.getElementById("password");
+    const forgotPasswordBtn = document.getElementById("btnForgotPassword");
 
     usernameInput?.addEventListener("input", (e) => {
         if (e.target.value.trim().toLowerCase() === "consulta") {
             passInput.removeAttribute("required");
         } else {
             passInput.setAttribute("required", "true");
+        }
+    });
+
+    forgotPasswordBtn?.addEventListener("click", async () => {
+        const email = usernameInput?.value.trim();
+
+        if (!email || !email.includes("@")) {
+            mostrarError("Ingresá tu email para recuperar la contraseña.");
+            usernameInput?.focus();
+            return;
+        }
+
+        ocultarError();
+
+        try {
+            const response = await fetch("login.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "forgot_password", username: email })
+            });
+
+            const rawText = await response.text();
+            let result = null;
+
+            try {
+                result = rawText ? JSON.parse(rawText) : null;
+            } catch (jsonErr) {
+                console.error("Respuesta no JSON de recuperación:", rawText);
+                mostrarError("No se pudo completar la recuperación de contraseña. Verificá que la app esté corriendo con PHP/Apache y no desde un servidor estático.");
+                return;
+            }
+
+            if (!result || !result.success) {
+                mostrarError((result && result.message) || "No se pudo enviar el correo de recuperación.");
+                return;
+            }
+
+            mostrarExito(result.message || "Si el email está registrado, recibirá un enlace para recuperar la contraseña.");
+        } catch (err) {
+            console.error("Error al solicitar recuperación:", err);
+            mostrarError("No se pudo completar la recuperación de contraseña.");
         }
     });
 
@@ -89,6 +131,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (errorDiv) {
             errorDiv.innerText = mensaje;
             errorDiv.style.display = "block";
+            errorDiv.style.color = "#ffb3b3";
+            errorDiv.style.borderColor = "rgba(255, 107, 107, 0.7)";
+        }
+    }
+
+    function mostrarExito(mensaje) {
+        if (errorDiv) {
+            errorDiv.innerText = mensaje;
+            errorDiv.style.display = "block";
+            errorDiv.style.color = "#8ef0a3";
+            errorDiv.style.borderColor = "rgba(110, 231, 183, 0.7)";
         }
     }
 

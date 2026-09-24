@@ -4,8 +4,70 @@ header('Content-Type: application/json');
 require_once 'config.php';
 
 $input = json_decode(file_get_contents('php://input'), true);
+$action = trim($input['action'] ?? 'login');
 $user = trim($input['username'] ?? '');
 $pass = trim($input['password'] ?? '');
+
+if ($action === 'forgot_password') {
+    if (!filter_var($user, FILTER_VALIDATE_EMAIL)) {
+        echo json_encode(['success' => false, 'message' => 'Ingresá un email válido para recuperar la contraseña.']);
+        exit;
+    }
+
+    $recover = supabaseAuthRequest('recover', [
+        'email' => strtolower($user),
+        'redirect_to' => appBaseUrl() . '/reset-password.php'
+    ]);
+
+    if ($recover['status'] >= 200 && $recover['status'] < 300) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Si el email está registrado, te enviamos un enlace para restablecer la contraseña.'
+        ]);
+        exit;
+    }
+
+    $message = $recover['data']['error_description']
+        ?? $recover['data']['msg']
+        ?? $recover['data']['message']
+        ?? 'No se pudo enviar el correo de recuperación.';
+
+    echo json_encode(['success' => false, 'message' => $message]);
+    exit;
+}
+
+if ($action === 'reset_password') {
+    $newPassword = trim((string)($input['new_password'] ?? ''));
+    $accessToken = trim((string)($input['access_token'] ?? ''));
+
+    if (strlen($newPassword) < 6) {
+        echo json_encode(['success' => false, 'message' => 'La nueva contraseña debe tener al menos 6 caracteres.']);
+        exit;
+    }
+
+    if ($accessToken === '') {
+        echo json_encode(['success' => false, 'message' => 'El enlace de recuperación no es válido.']);
+        exit;
+    }
+
+    $update = supabaseAuthRequest('user', ['password' => $newPassword], 'PUT', $accessToken);
+
+    if ($update['status'] >= 200 && $update['status'] < 300) {
+        echo json_encode([
+            'success' => true,
+            'message' => 'Contraseña restablecida correctamente. Ya podés iniciar sesión.'
+        ]);
+        exit;
+    }
+
+    $message = $update['data']['error_description']
+        ?? $update['data']['msg']
+        ?? $update['data']['message']
+        ?? 'No se pudo restablecer la contraseña.';
+
+    echo json_encode(['success' => false, 'message' => $message]);
+    exit;
+}
 
 if (empty($user)) {
     echo json_encode(['success' => false, 'message' => 'El usuario es requerido.']);

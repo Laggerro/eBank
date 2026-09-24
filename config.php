@@ -88,14 +88,21 @@ if (!function_exists('registrarAuditoria')) {
     }
 }
 
-function supabaseAuthRequest($endpoint, $data) {
+function supabaseAuthRequest($endpoint, $data = [], $method = 'POST', $bearerToken = null) {
     $ch = curl_init(SUPABASE_URL . '/auth/v1/' . ltrim($endpoint, '/'));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, strtoupper($method));
+
+    $headers = [
         'apikey: ' . SUPABASE_KEY,
         'Content-Type: application/json'
-    ]);
+    ];
+
+    if ($bearerToken !== null && $bearerToken !== '') {
+        $headers[] = 'Authorization: Bearer ' . $bearerToken;
+    }
+
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
@@ -104,4 +111,17 @@ function supabaseAuthRequest($endpoint, $data) {
     curl_close($ch);
 
     return ['status' => $httpCode, 'data' => json_decode($response, true)];
+}
+
+function appBaseUrl(): string {
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $scriptDir = dirname($_SERVER['SCRIPT_NAME'] ?? '/');
+    $basePath = rtrim($scriptDir, '/');
+
+    if ($basePath === '.' || $basePath === '/' || $basePath === '\\') {
+        $basePath = '';
+    }
+
+    return $scheme . '://' . $host . $basePath;
 }
