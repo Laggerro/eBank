@@ -42,6 +42,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     document.getElementById("btnCancelarEdicion")?.addEventListener("click", resetFormulario);
+    document.getElementById("chkCrearCuenta")?.addEventListener("change", actualizarControlesCuenta);
+    actualizarControlesCuenta();
 
     // 5. Cargar datos iniciales (Cursos y Tabla de Clientes)
     await cargarComboCursos();
@@ -244,6 +246,8 @@ function editarCliente(id) {
     document.getElementById("txtCurso").value = cliente.curso || "";
     document.getElementById("txtCodigoQr").value = cliente.codigo_qr || "";
     document.getElementById("txtPin").value = ""; // PIN vacío por seguridad al editar
+    document.getElementById("chkCrearCuenta").checked = false;
+    actualizarControlesCuenta();
 
     document.getElementById("lblTituloForm").innerText = " ✏️ Editar Cliente";
     document.getElementById("btnGuardar").innerText = "Actualizar Cliente";
@@ -275,6 +279,27 @@ async function guardarCliente(e) {
     const emailCuenta = document.getElementById("txtEmailCuenta")?.value.trim() || "";
     const passwordCuenta = document.getElementById("txtPasswordCuenta")?.value || "";
     const crearCuenta = document.getElementById("chkCrearCuenta")?.checked === true;
+
+    if (pinInput !== "" && !/^\d{4}$/.test(pinInput)) {
+        alert("El PIN debe contener exactamente 4 números.");
+        document.getElementById("txtPin").focus();
+        btn.disabled = false;
+        return;
+    }
+
+    if (crearCuenta && (!emailCuenta || !document.getElementById("txtEmailCuenta").checkValidity())) {
+        alert("Ingresá una dirección de email válida para crear la cuenta nueva.");
+        document.getElementById("txtEmailCuenta").focus();
+        btn.disabled = false;
+        return;
+    }
+
+    if (crearCuenta && passwordCuenta.length < 6) {
+        alert("La contraseña inicial debe tener al menos 6 caracteres.");
+        document.getElementById("txtPasswordCuenta").focus();
+        btn.disabled = false;
+        return;
+    }
 
     // Armamos el objeto PAYLOAD justo con lo que el usuario acaba de escribir
     const payload = {
@@ -352,6 +377,7 @@ function resetFormulario() {
     document.getElementById("helpPin")?.classList.add("d-none");
     const chkCrearCuenta = document.getElementById("chkCrearCuenta");
     if (chkCrearCuenta) chkCrearCuenta.checked = false;
+    actualizarControlesCuenta();
 
     const msgDiv = document.getElementById("msgAlta");
     if (msgDiv) msgDiv.classList.add("d-none");
@@ -423,5 +449,28 @@ async function eliminarCliente(id) {
         await cargarTablaClientes();
     } catch (error) {
         alert('No se pudo procesar la baja del alumno.');
+    }
+}
+
+function actualizarControlesCuenta() {
+    const crearCuenta = document.getElementById("chkCrearCuenta")?.checked === true;
+    const emailInput = document.getElementById("txtEmailCuenta");
+    const passwordInput = document.getElementById("txtPasswordCuenta");
+    const helpCuenta = document.getElementById("helpCuenta");
+    const grupoEmail = document.getElementById("grupoEmailCuenta");
+    const grupoPassword = document.getElementById("grupoPasswordCuenta");
+
+    [grupoEmail, grupoPassword].forEach((grupo) => grupo?.classList.toggle("d-none", !crearCuenta));
+    [emailInput, passwordInput].forEach((input) => {
+        if (!input) return;
+        input.disabled = !crearCuenta;
+        input.required = crearCuenta;
+        if (!crearCuenta) input.value = "";
+    });
+
+    if (helpCuenta) {
+        helpCuenta.textContent = crearCuenta
+            ? "Se creará un usuario nuevo. Esto no cambia cuentas existentes; para cambiar una contraseña, usá Recuperar contraseña desde el login."
+            : "Desmarcado: solo se guardan los datos del alumno. No se modifica ninguna cuenta existente.";
     }
 }

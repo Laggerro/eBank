@@ -18,6 +18,7 @@ as $$
 declare
     v_alumno public.alumnos%rowtype;
     v_posnet public.usuarios_banco%rowtype;
+    v_pin_hash text;
 begin
     if coalesce(trim(p_codigo_qr), '') = '' then
         return query select false, 'Código QR vacío.';
@@ -44,7 +45,12 @@ begin
         return;
     end if;
 
-    if not (v_alumno.pin::text = extensions.crypt(p_pin::text, v_alumno.pin::text)
+    v_pin_hash := v_alumno.pin::text;
+    if left(v_pin_hash, 4) = '$2y$' then
+        v_pin_hash := '$2a$' || substr(v_pin_hash, 5);
+    end if;
+
+    if not (v_pin_hash = extensions.crypt(p_pin::text, v_pin_hash)
         or v_alumno.pin::text = p_pin::text) then
         return query select false, 'PIN del alumno incorrecto.';
         return;

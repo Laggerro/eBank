@@ -130,18 +130,18 @@ document.addEventListener("DOMContentLoaded", () => {
     function mostrarError(mensaje) {
         if (errorDiv) {
             errorDiv.innerText = mensaje;
+            errorDiv.classList.remove("is-success");
+            errorDiv.classList.add("is-error");
             errorDiv.style.display = "block";
-            errorDiv.style.color = "#ffb3b3";
-            errorDiv.style.borderColor = "rgba(255, 107, 107, 0.7)";
         }
     }
 
     function mostrarExito(mensaje) {
         if (errorDiv) {
             errorDiv.innerText = mensaje;
+            errorDiv.classList.remove("is-error");
+            errorDiv.classList.add("is-success");
             errorDiv.style.display = "block";
-            errorDiv.style.color = "#8ef0a3";
-            errorDiv.style.borderColor = "rgba(110, 231, 183, 0.7)";
         }
     }
 
@@ -149,6 +149,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (errorDiv) {
             errorDiv.style.display = "none";
             errorDiv.innerText = "";
+            errorDiv.classList.remove("is-error", "is-success");
         }
     }
 });

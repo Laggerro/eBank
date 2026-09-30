@@ -86,15 +86,25 @@ body {
 }
 
 .error-message {
-  color: #e53e3e;
-  background-color: #fff5f5;
-  border: 1px solid #fed7d7;
-  padding: 10px;
+  padding: 12px 14px;
   border-radius: 6px;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
   margin-bottom: 15px;
   display: none;
   text-align: center;
+}
+
+.error-message.is-error {
+  color: #991b1b;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.error-message.is-success {
+  color: #166534;
+  background-color: #f0fdf4;
+  border: 1px solid #86efac;
 }
 
 /* --- MODAL QR MAESTRO --- */

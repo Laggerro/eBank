@@ -14,10 +14,11 @@ if ($action === 'forgot_password') {
         exit;
     }
 
-    $recover = supabaseAuthRequest('recover', [
-        'email' => strtolower($user),
-        'redirect_to' => appBaseUrl() . '/reset-password.php'
-    ]);
+    $redirectTo = appBaseUrl() . '/reset-password.php';
+    $recover = supabaseAuthRequest(
+        'recover?' . http_build_query(['redirect_to' => $redirectTo]),
+        ['email' => strtolower($user)]
+    );
 
     if ($recover['status'] >= 200 && $recover['status'] < 300) {
         echo json_encode([

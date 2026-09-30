@@ -80,25 +80,26 @@ if (!in_array(strtoupper($_SESSION['usuario']['rol'] ?? ''), ['ADMIN', 'CAJERO']
             <!-- PIN -->
             <div class="col-md-6">
               <label for="txtPin" class="form-label fw-bold">PIN de Seguridad (4 dígitos)</label>
-              <input type="password" id="txtPin" class="form-control" maxlength="4" placeholder="****">
+              <input type="password" id="txtPin" class="form-control" maxlength="4" pattern="[0-9]{4}" inputmode="numeric" autocomplete="new-password" placeholder="4 dígitos">
               <small id="helpPin" class="form-text text-muted d-none">(Dejar en blanco para mantener el actual)</small>
             </div>
 
-            <div class="col-md-6">
-              <label for="txtEmailCuenta" class="form-label fw-bold">Email de acceso (opcional)</label>
-              <input type="email" id="txtEmailCuenta" class="form-control" placeholder="alumno@ejemplo.com">
+            <div class="col-md-6 d-none" id="grupoEmailCuenta">
+              <label for="txtEmailCuenta" class="form-label fw-bold">Email para la cuenta nueva</label>
+              <input type="email" id="txtEmailCuenta" class="form-control" placeholder="alumno@ejemplo.com" disabled>
             </div>
-            <div class="col-md-6">
-              <label for="txtPasswordCuenta" class="form-label fw-bold">Contraseña web (opcional)</label>
-              <input type="password" id="txtPasswordCuenta" class="form-control" minlength="6" placeholder="Mínimo 6 caracteres">
+            <div class="col-md-6 d-none" id="grupoPasswordCuenta">
+              <label for="txtPasswordCuenta" class="form-label fw-bold">Contraseña inicial</label>
+              <input type="password" id="txtPasswordCuenta" class="form-control" minlength="6" placeholder="Mínimo 6 caracteres" disabled>
             </div>
             <div class="col-12">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="chkCrearCuenta">
                 <label class="form-check-label text-muted" for="chkCrearCuenta">
-                  Crear o recrear la cuenta de acceso del alumno
+                  Crear una cuenta de acceso nueva en Supabase
                 </label>
               </div>
+              <small id="helpCuenta" class="form-text text-muted">Desmarcado: solo se guardan los datos del alumno. No se modifica ninguna cuenta existente.</small>
             </div>
 
             <!-- CÓDIGO QR / TARJETA EN FORMULARIO -->

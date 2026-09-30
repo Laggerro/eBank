@@ -1,6 +1,10 @@
 -- Ejecutar en Supabase para habilitar cuentas y transferencias de alumnos.
 -- Supabase Auth administra la contraseña; alumnos conserva solo el PIN operativo.
 
+create unique index if not exists alumnos_codigo_qr_unique
+    on public.alumnos (codigo_qr)
+    where codigo_qr is not null and btrim(codigo_qr) <> '';
+
 create table if not exists public.perfiles_alumnos (
     id uuid primary key references auth.users(id) on delete cascade,
     alumno_id uuid not null unique references public.alumnos(id) on delete cascade,

@@ -15,6 +15,7 @@ if (!isset($_SESSION['usuario']) || strtoupper($_SESSION['usuario']['rol'] ?? ''
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Banco Escolar - Administración General</title>
     <link rel="stylesheet" href="../css/cajero.css">
+    <link rel="stylesheet" href="../css/lector-qr.css">
 </head>
 <body>
  
@@ -141,16 +142,6 @@ if (!isset($_SESSION['usuario']) || strtoupper($_SESSION['usuario']['rol'] ?? ''
         </div>
     </main>
 
-    <!-- MODAL DE CONFIRMACIÓN CON CÁMARA QR PARA RESET -->
-    <div id="modalResetQR" class="modal-qr-overlay" style="display: none;">
-        <div class="modal-qr-content">
-            <h3 style="color: #fc8181;">Autorizar Mantenimiento</h3>
-            <p style="font-size: 0.85rem; color: #a0aec0; margin-bottom: 15px;">Escaneá el QR Maestro para aplicar los cambios en la BD.</p>
-            <div id="readerReset" style="width: 100%; max-width: 300px; margin: 0 auto;"></div>
-            <button type="button" id="btnCerrarResetQR" class="btn btn-dark" style="margin-top: 15px; width: 100%;">Cancelar</button>
-        </div>
-    </div>
-
     <!-- MODAL DE CONFIRMACIÓN PARA ELIMINAR -->
     <div id="modalEliminar" class="modal-backdrop" style="display: none;">
         <div class="modal-box">
@@ -164,6 +155,7 @@ if (!isset($_SESSION['usuario']) || strtoupper($_SESSION['usuario']['rol'] ?? ''
     </div>
 
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="../js/lectorQR.js"></script>
     <script src="../js/administrar.js"></script>
 </body>
 </html>

@@ -5,7 +5,7 @@ let camaraEscaneando = false;
 /**
  * Abre el modal de lectura e inicia la cámara / ingreso manual
  */
-async function abrirLectorQR(onSuccessCallback) {
+async function abrirLectorQR(onSuccessCallback, options = {}) {
   // Limpieza defensiva si había una instancia previa
   if (html5QrCodeScanner) {
     await cerrarLectorQR();
@@ -42,6 +42,17 @@ async function abrirLectorQR(onSuccessCallback) {
     `;
     document.body.insertAdjacentHTML("beforeend", modalHTML);
     modal = document.getElementById("modalScannerQR");
+  }
+
+  const titulo = modal.querySelector(".modal-qr-header span");
+  const etiquetaManual = modal.querySelector("label[for='txtManualQR']");
+  const inputManualExistente = document.getElementById("txtManualQR");
+  if (titulo) titulo.textContent = options.title || "📷 Escanear Código QR";
+  if (etiquetaManual) {
+    etiquetaManual.textContent = options.manualLabel || "¿No funciona la cámara? Ingrese el código / DNI:";
+  }
+  if (inputManualExistente) {
+    inputManualExistente.placeholder = options.placeholder || "Ej: 46342761";
   }
 
   // Mostrar modal con alta prioridad

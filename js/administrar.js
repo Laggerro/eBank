@@ -16,7 +16,6 @@ window.cerrarModalEliminar = function() {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    let qrResetScanner = null;
     let cacheUsuarios = [];
     let cachePosnets = [];
 
@@ -346,22 +345,14 @@ document.getElementById('formImportarCSV')?.addEventListener('submit', async (e)
             return;
         }
 
-        document.getElementById('modalResetQR').style.display = 'flex';
-        if (!qrResetScanner) {
-            qrResetScanner = new Html5QrcodeScanner("readerReset", { fps: 10, qrbox: 200 }, false);
-        }
-        qrResetScanner.render(onScanResetSuccess, () => {});
+        abrirLectorQR(onScanResetSuccess, {
+            title: "Autorizar Mantenimiento",
+            manualLabel: "Escaneá el QR Maestro o ingresá el código manualmente:",
+            placeholder: "Código QR Maestro"
+        });
     });
 
-    document.getElementById('btnCerrarResetQR')?.addEventListener('click', cerrarResetQR);
-
-    function cerrarResetQR() {
-        if (qrResetScanner) qrResetScanner.clear().catch(() => {});
-        document.getElementById('modalResetQR').style.display = 'none';
-    }
-
     async function onScanResetSuccess(qrMaestroText) {
-        cerrarResetQR();
         const payload = {
             action: 'reset_bd',
             qr_code: qrMaestroText,

@@ -108,9 +108,14 @@ function supabaseAuthRequest($endpoint, $data = [], $method = 'POST', $bearerTok
 
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curlError = curl_error($ch);
     curl_close($ch);
 
-    return ['status' => $httpCode, 'data' => json_decode($response, true)];
+    return [
+        'status' => $httpCode,
+        'data' => json_decode($response, true),
+        'transport_error' => $curlError
+    ];
 }
 
 function appBaseUrl(): string {

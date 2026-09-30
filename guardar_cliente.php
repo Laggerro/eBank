@@ -97,9 +97,20 @@ try {
     $emailCuenta = strtolower(trim($data['email_cuenta'] ?? ''));
     $passwordCuenta = (string)($data['password_cuenta'] ?? '');
     $crearCuenta = !empty($data['crear_cuenta']);
+    $pinNuevo = trim((string)($data['pin'] ?? ''));
 
     if (empty($dniNuevo) || empty($nombreApellido)) {
         throw new Exception("El DNI y el Nombre Completo son obligatorios.");
+    }
+    if ($pinNuevo !== '' && !preg_match('/^\d{4}$/', $pinNuevo)) {
+        throw new Exception('El PIN debe contener exactamente 4 números.');
+    }
+
+    if ($crearCuenta && !filter_var($emailCuenta, FILTER_VALIDATE_EMAIL)) {
+        throw new Exception('Ingresá un email válido para crear la cuenta nueva.');
+    }
+    if ($crearCuenta && strlen($passwordCuenta) < 6) {
+        throw new Exception('La contraseña inicial debe tener al menos 6 caracteres.');
     }
 
     $filtroExclusion = $id ? '&id=neq.' . urlencode($id) : '';
@@ -139,8 +150,8 @@ try {
         $payload['foto_url'] = $urlFoto;
     }
 
-    if (!empty($data['pin'])) {
-        $payload['pin'] = password_hash($data['pin'], PASSWORD_BCRYPT);
+    if ($pinNuevo !== '') {
+        $payload['pin'] = password_hash($pinNuevo, PASSWORD_BCRYPT);
     }
 
     // Si tiene ID (ya sea por edición o por autocompletado del CSV préviamene importado)
@@ -161,16 +172,15 @@ try {
 
 
     if (isset($res['code']) || isset($res['error'])) {
+        if (($res['code'] ?? '') === '23505' && strpos($res['message'] ?? '', 'alumnos_codigo_qr_unique') !== false) {
+            throw new Exception('El código QR ya está asignado a otro alumno.');
+        }
         $msgError = $res['message'] ?? 'Error al procesar en Supabase';
         echo json_encode(['success' => false, 'message' => 'Error de BD: ' . $msgError, 'raw' => $res]);
         exit;
     }
 
     if ($crearCuenta) {
-        if (!filter_var($emailCuenta, FILTER_VALIDATE_EMAIL) || strlen($passwordCuenta) < 6) {
-            throw new Exception('La cuenta requiere un email válido y una contraseña de al menos 6 caracteres.');
-        }
-
         $alumnoCreado = is_array($res) && isset($res[0]) ? $res[0] : null;
         if (!$alumnoCreado && $id) {
             $resAlumnoActual = supabaseQuery(
@@ -188,8 +198,42 @@ try {
             'password' => $passwordCuenta,
             'data' => ['alumno_id' => $alumnoCreado['id']]
         ]);
-        if ($auth['status'] < 200 || $auth['status'] >= 300 || empty($auth['data']['user']['id'])) {
-            throw new Exception($auth['data']['msg'] ?? $auth['data']['error_description'] ?? 'No se pudo crear la cuenta de acceso.');
+        $authData = is_array($auth['data']) ? $auth['data'] : [];
+        $authUser = isset($authData['user']) && is_array($authData['user'])
+            ? $authData['user']
+            : $authData;
+        $authUserId = $authUser['id'] ?? '';
+        $emailYaRegistrado = is_array($authUser['identities'] ?? null)
+            && count($authUser['identities']) === 0;
+
+        if ($auth['status'] < 200 || $auth['status'] >= 300 || empty($authUserId) || $emailYaRegistrado) {
+            $mensajeCuenta = $emailYaRegistrado
+                ? 'Ese email ya tiene una cuenta en Supabase Auth. Usá otro email o vinculá la cuenta existente.'
+                : ($authData['msg']
+                    ?? $authData['error_description']
+                    ?? $authData['message']
+                    ?? (is_string($authData['error'] ?? null) ? $authData['error'] : null)
+                    ?? $auth['transport_error']
+                    ?? 'Supabase Auth rechazó el alta sin devolver un mensaje.');
+
+            $codigoAuth = $authData['code'] ?? null;
+            if ($codigoAuth) {
+                $mensajeCuenta .= ' (código: ' . $codigoAuth . ').';
+            } elseif (!empty($auth['status'])) {
+                $mensajeCuenta .= ' (HTTP ' . (int)$auth['status'] . ').';
+            }
+
+            if (!$id) {
+                $rollback = supabaseQuery(
+                    'alumnos?id=eq.' . urlencode($alumnoCreado['id']),
+                    'DELETE'
+                );
+                if (isset($rollback['code']) || isset($rollback['error'])) {
+                    $mensajeCuenta .= ' El registro del alumno quedó guardado; buscá el DNI antes de reintentar.';
+                }
+            }
+
+            throw new Exception($mensajeCuenta);
         }
     }
 
